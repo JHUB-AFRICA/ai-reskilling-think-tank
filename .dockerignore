@@ -1,0 +1,43 @@
+# Python virtual environments (very large, not needed in Docker)
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node.js
+CareerDev/node_modules
+node_modules
+CareerDev/dist
+
+# Python build artifacts
+reskilling-platform/__pycache__
+reskilling-platform/*.egg-info
+reskilling-platform/.pytest_cache
+reskilling-platform/htmlcov
+reskilling-platform/.coverage
+
+# Environment files (secrets — injected at runtime)
+.env
+reskilling-platform/.env
+CareerDev/.env.local
+
+# Git
+.git
+.gitignore
+
+# Docs and dev files
+docs/
+*.md
+*.docx
+*.zip
+*.bat
+*.sh
+
+# Docker files (not needed inside the image)
+docker-compose.yml
+Dockerfile.unified
+env-bundle/

@@ -1,0 +1,83 @@
+# ============================================================
+# Docker Compose — AI Reskilling Think Tank Platform
+# ============================================================
+# Quick start:
+#   cp .env.example .env
+#   docker compose up
+#
+# Rebuild after code changes:
+#   docker compose up --build
+#
+# Stop:
+#   docker compose down
+# ============================================================
+
+name: ai-reskilling-platform
+
+services:
+
+  # ------------------------------------------------------------
+  # Backend: FastAPI (Python 3.11 + spaCy + Gemini)
+  # ------------------------------------------------------------
+  backend:
+    build:
+      context: ./reskilling-platform
+      dockerfile: Dockerfile
+    container_name: reskilling_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./reskilling-platform/.env
+    environment:
+      # Override CORS to allow the local frontend container
+      - CORS_ORIGINS=http://localhost:80,http://localhost:3000
+    volumes:
+      # Persist xAPI log across container restarts
+      - lrs_data:/app/data/processed
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s   # spaCy model load takes ~60s on first run
+    networks:
+      - reskilling_net
+
+  # ------------------------------------------------------------
+  # Frontend: React/Vite (served by Nginx)
+  # ------------------------------------------------------------
+  frontend:
+    build:
+      context: ./CareerDev
+      dockerfile: Dockerfile
+      args:
+        # These are passed at build time — change in .env, then rebuild
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_API_URL: http://localhost:8000
+    container_name: reskilling_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - reskilling_net
+
+# ------------------------------------------------------------
+# Named Volumes
+# ------------------------------------------------------------
+volumes:
+  lrs_data:
+    name: reskilling_lrs_data
+
+# ------------------------------------------------------------
+# Networks
+# ------------------------------------------------------------
+networks:
+  reskilling_net:
+    name: reskilling_network
+    driver: bridge

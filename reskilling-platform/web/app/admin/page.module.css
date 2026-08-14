@@ -1,0 +1,45 @@
+.lead {
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 60ch;
+  margin-bottom: 20px;
+}
+
+.denied {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.error {
+  color: #a33;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.table {
+  width: 100%;
+  max-width: 560px;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  text-transform: capitalize;
+}

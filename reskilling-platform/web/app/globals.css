@@ -1,0 +1,82 @@
+:root {
+  --ink: #1c2b39;
+  --ink-soft: #445264;
+  --paper: #f4f3ef;
+  --panel: #ffffff;
+  --border: #d8d4c8;
+  --accent: #b5651d;
+  --accent-dark: #8c4e14;
+  --accent-soft: #f0ddc8;
+  --success: #2f6f62;
+  --success-soft: #dceae6;
+  --muted: #6b6a63;
+  --radius: 10px;
+  --font-display: var(--font-display-family), Georgia, serif;
+  --font-body: var(--font-body-family), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-mono-family), "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 0.4em 0;
+}
+
+h1 {
+  font-size: 28px;
+}
+h2 {
+  font-size: 20px;
+}
+h3 {
+  font-size: 16px;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  padding: 40px 48px;
+  max-width: 920px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}

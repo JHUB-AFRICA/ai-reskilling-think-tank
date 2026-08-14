@@ -1,0 +1,36 @@
+# Frontend .dockerignore
+# Prevents large/secret files from being sent to Docker build context
+
+# Node modules (huge — reinstalled inside container via npm ci)
+node_modules/
+
+# Build output (rebuilt inside container)
+dist/
+.vite/
+
+# Environment / secrets
+.env
+.env.local
+*.env
+!*.env.example
+
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+
+# Test / coverage artifacts
+coverage/
+*.lcov
+
+# Scratch files
+repomix-output.xml
+task.md

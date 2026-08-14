@@ -1,0 +1,92 @@
+.caption {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 68ch;
+  margin-bottom: 20px;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.trackRow {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.track {
+  flex: 0 0 220px;
+}
+
+.trackHeader {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--accent-dark);
+  padding: 8px 0;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 14px;
+}
+
+.nodeColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.nodeWrap {
+  position: relative;
+}
+
+.connector {
+  width: 2px;
+  height: 14px;
+  background: var(--border);
+  margin: 0 auto;
+}
+
+.nodeName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nodeImportance {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.resourceList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.resourceCurated,
+.resourceSearch {
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.resourceCurated {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.resourceCurated::before {
+  content: "\2713 ";
+}
+
+.resourceSearch {
+  color: var(--muted);
+}
+
+.resourceCurated:hover,
+.resourceSearch:hover {
+  text-decoration: underline;
+}

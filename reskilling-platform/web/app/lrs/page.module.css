@@ -1,0 +1,56 @@
+.lead {
+  color: var(--ink-soft);
+  max-width: 65ch;
+  margin-bottom: 20px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.row,
+.rowSelected {
+  cursor: pointer;
+}
+
+.row td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rowSelected td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--accent-soft);
+}
+
+.sectionHeading {
+  margin-top: 28px;
+}
+
+.jsonBlock {
+  background: var(--ink);
+  color: #d9e0e8;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-x: auto;
+}

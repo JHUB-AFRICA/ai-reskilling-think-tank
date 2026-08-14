@@ -1,0 +1,72 @@
+# ============================================================
+# Root .gitignore — AI Reskilling Think Tank Platform
+# ============================================================
+
+# ----- Environment / Secrets --------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+
+# ----- Python -----------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.venv/
+venv/
+env/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+htmlcov/
+.coverage
+coverage.xml
+junit*.xml
+
+# ----- Node / Frontend --------------------------------------
+node_modules/
+dist/
+.cache/
+.parcel-cache/
+*.tsbuildinfo
+.vite/
+
+# ----- Editor / OS ------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+desktop.ini
+
+# ----- Logs / Data ------------------------------------------
+*.log
+lrs_log.jsonl
+xapi_statements.jsonl
+
+# ----- Build artifacts / scratch ----------------------------
+repomix-output.xml
+task.md
+*.tmp
+*.temp
+
+# ----- O*NET data (large, not committed — download separately)
+data/raw/
+data/processed/
+
+# ----- spaCy model (downloaded at runtime) ------------------
+# en_core_web_md is installed via: python -m spacy download en_core_web_md

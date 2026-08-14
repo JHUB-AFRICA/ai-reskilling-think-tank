@@ -1,0 +1,107 @@
+.lead {
+  color: var(--muted);
+  max-width: 68ch;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.warning {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.textarea {
+  width: 100%;
+  max-width: 560px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 14px;
+  resize: vertical;
+}
+
+.error {
+  color: #a33;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.primaryButton {
+  margin-top: 14px;
+  display: block;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+}
+
+.rateLimit {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.results {
+  margin-top: 24px;
+}
+
+.cachedNote {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.suggestionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.suggestionName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.badgeMatch,
+.badgeEmerging {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.badgeMatch {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badgeEmerging {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}

@@ -1,0 +1,42 @@
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.segments {
+  display: flex;
+  gap: 3px;
+}
+
+.segmentEmpty,
+.segmentFilled {
+  flex: 1;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.segmentEmpty {
+  background: var(--border);
+}
+
+.segmentFilled {
+  background: var(--accent);
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.score {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
+.label {
+  font-size: 13px;
+  color: var(--muted);
+}

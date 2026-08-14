@@ -1,0 +1,132 @@
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--ink);
+  color: #e8e6df;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandMark {
+  width: 10px;
+  height: 24px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.brandTitle {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.brandSubtitle {
+  font-size: 11px;
+  color: #9aa4b0;
+  margin-top: 2px;
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem,
+.navItemActive {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-decoration: none;
+  color: #cdd2d9;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.navItemActive {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sessionBlock {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sessionLabel {
+  display: block;
+  font-size: 11px;
+  color: #9aa4b0;
+  margin-bottom: 6px;
+}
+
+.sessionInput {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 13px;
+}
+
+.sessionInput:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.navDivider {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a8290;
+  margin-top: 6px;
+  padding: 0 12px;
+}
+
+.signInLink {
+  display: block;
+  text-align: center;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signOutButton {
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #cdd2d9;
+  font-size: 12px;
+}
+
+.signOutButton:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}

@@ -1,0 +1,51 @@
+# Backend .dockerignore
+# Prevents large/secret files from being sent to Docker build context
+
+# Virtual environments (huge — rebuild inside container instead)
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Environment / secrets
+.env
+.env.local
+*.env
+!*.env.example
+
+# O*NET raw data (large — mount as volume or download separately)
+data/raw/
+
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Docs (not needed in runtime container)
+*.docx
+*.pdf
+
+# Logs
+*.log
+lrs_log.jsonl
+xapi_statements.jsonl
+
+# Build artifacts
+repomix-output.xml
+task.md
