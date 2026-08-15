@@ -92,6 +92,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create placeholder backend environment file
+        run: touch reskilling-platform/.env
+
       - name: Verify docker compose config
         run: docker compose config
         env:
