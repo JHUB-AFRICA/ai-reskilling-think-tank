@@ -53,7 +53,9 @@ def check_and_record_daily_limit(user_id: str) -> bool:
     return True
 
 
-def get_cached_response(user_id: str, resume_text: str, career_goal: str) -> list[dict] | None:
+def get_cached_response(
+    user_id: str, resume_text: str, career_goal: str
+) -> list[dict] | None:
     key = _cache_key(user_id, resume_text, career_goal)
     entry = _response_cache.get(key)
     if not entry:

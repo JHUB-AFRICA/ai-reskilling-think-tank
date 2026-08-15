@@ -24,7 +24,9 @@ from sqlalchemy import text
 
 from reskilling.db import check_connection, get_engine
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 TAXONOMY_PATH = Path("data/processed/skills_taxonomy_v1.csv")
@@ -45,10 +47,12 @@ def load_and_migrate() -> None:
     occupations = df[["onet_soc_code", "occupation_title"]].drop_duplicates(
         subset=["onet_soc_code"]
     )
-    skills = df[["skill_id", "skill_name", "cluster", "domain", "source", "onet_element_id"]].drop_duplicates(
-        subset=["skill_id"]
-    )
-    occupation_skills = df[["onet_soc_code", "skill_id", "importance"]].drop_duplicates()
+    skills = df[
+        ["skill_id", "skill_name", "cluster", "domain", "source", "onet_element_id"]
+    ].drop_duplicates(subset=["skill_id"])
+    occupation_skills = df[
+        ["onet_soc_code", "skill_id", "importance"]
+    ].drop_duplicates()
 
     logger.info(
         "Migrating %d occupations, %d skills, %d occupation-skill rows",
@@ -68,7 +72,9 @@ def load_and_migrate() -> None:
 
         occupations.to_sql("occupations", conn, if_exists="append", index=False)
         skills.to_sql("skills", conn, if_exists="append", index=False)
-        occupation_skills.to_sql("occupation_skills", conn, if_exists="append", index=False)
+        occupation_skills.to_sql(
+            "occupation_skills", conn, if_exists="append", index=False
+        )
 
     logger.info("Migration complete.")
 

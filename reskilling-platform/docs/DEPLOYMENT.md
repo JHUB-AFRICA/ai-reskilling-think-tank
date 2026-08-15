@@ -8,7 +8,7 @@ This guide covers deploying the full platform to production:
 
 ## Prerequisites
 
-- GitHub account (repo owner: [Brian-code-lab](https://github.com/Brian-code-lab))
+- GitHub account (repo owner: [JHUB-AFRICA](https://github.com/JHUB-AFRICA))
 - Railway account ([railway.app](https://railway.app)) — free tier requires GitHub login
 - Supabase project (already configured)
 - Gemini API key ([aistudio.google.com/apikey](https://aistudio.google.com/apikey))
@@ -22,7 +22,7 @@ This guide covers deploying the full platform to production:
 1. Go to [railway.app](https://railway.app) → **New Project**
 2. Select **Deploy from GitHub repo**
 3. Authorise Railway to access your GitHub account
-4. Select `Brian-code-lab/ai-reskilling-platform`
+4. Select `JHUB-AFRICA/ai-reskilling-think-tank`
 5. When asked which directory: select `reskilling-platform/`
 
 Railway detects the `Dockerfile` automatically.
@@ -38,7 +38,7 @@ In the Railway project dashboard → **Variables**, add:
 | `SUPABASE_JWT_SECRET` | `<jwt-secret>` | From Supabase → Settings → Data API → JWT Secret |
 | `DATABASE_URL` | `postgresql://...` | From Supabase → Settings → Database → Connection string |
 | `GEMINI_API_KEY` | `AIza...` | From Google AI Studio |
-| `CORS_ORIGINS` | `https://Brian-code-lab.github.io` | Your GitHub Pages URL |
+| `CORS_ORIGINS` | `https://JHUB-AFRICA.github.io` | Your GitHub Pages URL |
 | `PORT` | `8000` | Railway auto-detects, but set explicitly for Dockerfile |
 
 ### 1c. Note your Railway URL
@@ -88,7 +88,7 @@ The first time you push to `main`, the `Deploy Frontend to GitHub Pages` workflo
 
 Your live URL will be:
 ```
-https://Brian-code-lab.github.io/ai-reskilling-platform/
+https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/
 ```
 
 ---
@@ -112,7 +112,7 @@ https://Brian-code-lab.github.io/ai-reskilling-platform/
 
 ## Step 5 — Verify the Full Deployment
 
-1. Open `https://Brian-code-lab.github.io/ai-reskilling-platform/`
+1. Open `https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/`
 2. Register a new account
 3. Log in → should redirect to Dashboard
 4. Go to **Career Analysis** → paste a resume → select an occupation → submit
@@ -146,8 +146,8 @@ Once deployed, share these links:
 
 | Link | Purpose |
 |---|---|
-| `https://Brian-code-lab.github.io/ai-reskilling-platform/` | Live application |
+| `https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/` | Live application |
 | `https://ai-reskilling-api.up.railway.app/docs` | API documentation |
-| `https://github.com/Brian-code-lab/ai-reskilling-platform` | Source code |
+| `https://github.com/JHUB-AFRICA/ai-reskilling-think-tank` | Source code |
 
 To gather structured feedback, consider creating a GitHub Discussion or a simple Google Form linked from the app.

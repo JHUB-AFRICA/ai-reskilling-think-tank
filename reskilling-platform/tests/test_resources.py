@@ -46,33 +46,46 @@ class TestMergeResources:
         assert all(r.tier == "search" for r in result)
 
     def test_curated_rows_come_first(self):
-        curated = [{
-            "title": "Real Python Course",
-            "url": "https://example.com/py",
-            "provider": "Example Academy",
-            "is_free": False,
-        }]
+        curated = [
+            {
+                "title": "Real Python Course",
+                "url": "https://example.com/py",
+                "provider": "Example Academy",
+                "is_free": False,
+            }
+        ]
         result = merge_resources(curated, "Python", search_limit=1)
         assert result[0].tier == "curated"
         assert result[0].title == "Real Python Course"
         assert result[1].tier == "search"
 
     def test_curated_and_search_both_present(self):
-        curated = [{
-            "title": "X", "url": "https://x.com",
-            "provider": "X Academy", "is_free": True,
-        }]
+        curated = [
+            {
+                "title": "X",
+                "url": "https://x.com",
+                "provider": "X Academy",
+                "is_free": True,
+            }
+        ]
         result = merge_resources(curated, "SQL", search_limit=2)
         tiers = [r.tier for r in result]
         assert tiers == ["curated", "search", "search"]
 
     def test_curated_row_fields_preserved(self):
-        curated = [{
-            "title": "X", "url": "https://x.com",
-            "provider": "X Academy", "is_free": True,
-        }]
+        curated = [
+            {
+                "title": "X",
+                "url": "https://x.com",
+                "provider": "X Academy",
+                "is_free": True,
+            }
+        ]
         result = merge_resources(curated, "SQL", search_limit=0)
         assert result[0].to_dict() == {
-            "title": "X", "url": "https://x.com", "provider": "X Academy",
-            "tier": "curated", "is_free": True,
+            "title": "X",
+            "url": "https://x.com",
+            "provider": "X Academy",
+            "tier": "curated",
+            "is_free": True,
         }
