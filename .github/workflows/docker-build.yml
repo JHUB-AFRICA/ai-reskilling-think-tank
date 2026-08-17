@@ -1,101 +1,112 @@
-name: Docker Build Verification
+name: Build & Push Unified Docker Image
+
+# ============================================================
+# Builds ONE image (FastAPI backend + compiled React SPA) and
+# pushes it to the GitHub Container Registry (ghcr.io).
+#
+# Image name: ghcr.io/<owner>/<repo>
+# Tags produced:
+#   • main        → on every push to main
+#   • pr-<number> → on pull-request builds (not pushed)
+#   • v<semver>   → on tag pushes (e.g. git tag v1.2.3)
+# ============================================================
 
 on:
-  pull_request:
-    branches: [main]
   push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
     branches: [main]
 
 jobs:
-  docker-backend:
-    name: Build and Push Backend Image
+  build-unified:
+    name: Build & Push Unified Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: write  # needed to push to ghcr.io
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ── Docker tooling ──────────────────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to the Container registry
+      # Log in to GHCR (skipped on pull-requests from forks)
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
+      # ── Image metadata (tags + OCI labels) ─────────────────
+      - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}-backend
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # branch push → ghcr.io/<owner>/<repo>:main
+            type=ref,event=branch
+            # PR builds → ghcr.io/<owner>/<repo>:pr-<n>  (not pushed)
+            type=ref,event=pr
+            # semver tag → ghcr.io/<owner>/<repo>:v1.2.3 + :1.2 + :1
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # always keep a :latest alias on the main branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build and push backend image
+      # ── Build & push ────────────────────────────────────────
+      - name: Build and push unified image
         uses: docker/build-push-action@v5
         with:
-          context: ./reskilling-platform
-          file: ./reskilling-platform/Dockerfile
+          context: .                        # repo root (needs both CareerDev/ and reskilling-platform/)
+          file: ./Dockerfile.unified
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
-
-  docker-frontend:
-    name: Build and Push Frontend Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}-frontend
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./CareerDev
-          file: ./CareerDev/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          # Supabase build-time vars (frontend bakes them in at build time)
           build-args: |
-            VITE_SUPABASE_URL=https://placeholder.supabase.co
-            VITE_SUPABASE_ANON_KEY=placeholder-key
-            VITE_API_URL=https://placeholder-api.railway.app
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # GitHub Actions layer cache — dramatically speeds up rebuilds
+          cache-from: type=gha,scope=unified
+          cache-to: type=gha,mode=max,scope=unified
 
-  docker-compose-verify:
-    name: Verify docker-compose.yml Syntax
+      # ── Summary ─────────────────────────────────────────────
+      - name: Print image digest
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "## 🐳 Unified Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`ghcr.io/${{ github.repository }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.meta.outputs.tags }}' | tr ',' '\n' | sed 's/^/- `/' | sed 's/$/`/' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull & run:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -p 8000:8000 --env-file .env ghcr.io/${{ github.repository }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # ── Validate docker-compose.yml parses correctly ───────────
+  compose-verify:
+    name: Verify docker-compose.yml
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create placeholder backend environment file
+      - name: Create stub env file (backend expects it)
         run: touch reskilling-platform/.env
 
-      - name: Verify docker compose config
+      - name: Validate compose config
         run: docker compose config
         env:
           SUPABASE_URL: https://placeholder.supabase.co
@@ -105,5 +116,6 @@ jobs:
           GEMINI_API_KEY: placeholder-gemini-key
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
-          VITE_API_URL: http://localhost:8000
+          VITE_API_URL: ""
           CORS_ORIGINS: http://localhost:80
+          GHCR_IMAGE: ghcr.io/placeholder/placeholder:main
