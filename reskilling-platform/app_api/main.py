@@ -40,7 +40,13 @@ from reskilling.lrs import LRS_LOG_PATH, log_gap_analysis_event, log_resume_uplo
 from reskilling.recommender import ReskillingRecommender
 
 # pyrefly: ignore [missing-import]
-from .auth import CurrentUser, CurrentUserWithRole, get_current_user, get_current_user_with_role, require_role
+from .auth import (
+    CurrentUser,
+    CurrentUserWithRole,
+    get_current_user,
+    get_current_user_with_role,
+    require_role,
+)
 
 if TYPE_CHECKING:
     # Only needed for type hints -- importing reskilling.nlp at module
@@ -68,10 +74,10 @@ app = FastAPI(
 # API without being blocked by same-origin policy.
 # ---------------------------------------------------------------------------
 _default_origins = [
-    "http://localhost:5173",   # Vite / CareerDev dev server (default)
-    "http://localhost:5174",   # Vite fallback port (when 5173 is occupied)
-    "http://localhost:5175",   # Vite fallback port (when 5173+5174 are occupied)
-    "http://localhost:3000",   # Next.js frontend (reskilling-platform/web)
+    "http://localhost:5173",  # Vite / CareerDev dev server (default)
+    "http://localhost:5174",  # Vite fallback port (when 5173 is occupied)
+    "http://localhost:5175",  # Vite fallback port (when 5173+5174 are occupied)
+    "http://localhost:3000",  # Next.js frontend (reskilling-platform/web)
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
     "http://127.0.0.1:3000",
@@ -109,7 +115,13 @@ async def log_request_latency(request: Request, call_next):
     response = await call_next(request)
     duration_ms = (time.perf_counter() - start) * 1000
     response.headers["X-Response-Time-Ms"] = f"{duration_ms:.1f}"
-    logger.info("%s %s -> %d in %.1fms", request.method, request.url.path, response.status_code, duration_ms)
+    logger.info(
+        "%s %s -> %d in %.1fms",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
     return response
 
 
@@ -118,6 +130,7 @@ async def log_request_latency(request: Request, call_next):
 # @st.cache_resource pattern in app/services.py -- expensive objects
 # built once per process, not per request).
 # --------------------------------------------------------------------------
+
 
 @lru_cache(maxsize=1)
 def _build_extractor() -> "SkillExtractor":
@@ -143,6 +156,7 @@ def get_recommender_dep() -> ReskillingRecommender:
 # Request/response contracts
 # --------------------------------------------------------------------------
 
+
 class ExtractSkillsRequest(BaseModel):
     resume_text: str = Field(..., min_length=1)
 
@@ -156,6 +170,7 @@ class GapAnalysisRequest(BaseModel):
 # --------------------------------------------------------------------------
 # Endpoints
 # --------------------------------------------------------------------------
+
 
 @app.get("/health")
 def health() -> dict:
@@ -250,6 +265,7 @@ def taxonomy_requirements(
 # endpoints above and do not affect Phase A/B behavior if left unset.
 # --------------------------------------------------------------------------
 
+
 @app.post("/me/gap-analyses")
 def create_gap_analysis_for_user(
     req: GapAnalysisRequest,
@@ -303,6 +319,7 @@ def list_gap_analyses_for_user(user: CurrentUser = Depends(get_current_user)) ->
 # platform's core value never depends on this layer.
 # --------------------------------------------------------------------------
 
+
 class CareerGuidanceRequest(BaseModel):
     resume_text: str = Field(..., min_length=1)
     career_goal: str = Field(..., min_length=1)
@@ -334,7 +351,9 @@ def career_guidance(
     current_skills = [s.skill_name for s in extractor.extract(req.resume_text)]
 
     try:
-        raw_suggestions = llm_reasoning.suggest_skills_for_goal(current_skills, req.career_goal)
+        raw_suggestions = llm_reasoning.suggest_skills_for_goal(
+            current_skills, req.career_goal
+        )
     except llm_reasoning.GeminiNotConfiguredError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -348,7 +367,9 @@ def career_guidance(
             recommender.taxonomy["skill_name"], recommender.taxonomy["skill_id"]
         )
     }
-    classified = llm_reasoning.classify_against_taxonomy(raw_suggestions, taxonomy_skills)
+    classified = llm_reasoning.classify_against_taxonomy(
+        raw_suggestions, taxonomy_skills
+    )
     result = [c.to_dict() for c in classified]
 
     rl.set_cached_response(user.id, req.resume_text, req.career_goal, result)
@@ -385,8 +406,10 @@ def career_guidance_stream(
 
     cached = rl.get_cached_response(user.id, req.resume_text, req.career_goal)
     if cached is not None:
+
         def cached_stream():
             yield f"event: result\ndata: {json.dumps({'suggestions': cached, 'cached': True})}\n\n"
+
         return StreamingResponse(cached_stream(), media_type="text/event-stream")
 
     if not rl.check_and_record_daily_limit(user.id):
@@ -418,12 +441,16 @@ def career_guidance_stream(
 
     def event_stream():
         accumulated = ""
-        for chunk in llm_reasoning.stream_reasoning_chunks(current_skills, req.career_goal):
+        for chunk in llm_reasoning.stream_reasoning_chunks(
+            current_skills, req.career_goal
+        ):
             accumulated += chunk
             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
         raw_suggestions = llm_reasoning._extract_json_array(accumulated)
-        classified = llm_reasoning.classify_against_taxonomy(raw_suggestions, taxonomy_skills)
+        classified = llm_reasoning.classify_against_taxonomy(
+            raw_suggestions, taxonomy_skills
+        )
         result = [c.to_dict() for c in classified]
         rl.set_cached_response(user.id, req.resume_text, req.career_goal, result)
 
@@ -439,6 +466,7 @@ def career_guidance_stream(
 # src/reskilling/resources.py's module docstring for the "curated" vs
 # "search" trust distinction this returns.
 # --------------------------------------------------------------------------
+
 
 class SkillResourcesRequest(BaseModel):
     skills: list[dict] = Field(
@@ -476,7 +504,10 @@ def browse_learning_resources(
 
     return {
         "resources": db.list_learning_resources(
-            query=query, skill=skill, verification_status=verification_status, limit=limit
+            query=query,
+            skill=skill,
+            verification_status=verification_status,
+            limit=limit,
         )
     }
 
@@ -515,7 +546,9 @@ def save_my_learning_item(
 class SkillEvidenceRequest(BaseModel):
     skill_name: str = Field(..., min_length=1, max_length=200)
     skill_id: str | None = None
-    evidence_type: str = Field(..., description="certificate, project, assessment, portfolio, or note")
+    evidence_type: str = Field(
+        ..., description="certificate, project, assessment, portfolio, or note"
+    )
     evidence_url: str | None = Field(default=None, max_length=2048)
     description: str | None = Field(default=None, max_length=3000)
     assessment_score: float | None = Field(default=None, ge=0, le=100)
@@ -552,10 +585,14 @@ def get_evidence_aware_readiness(user: CurrentUser = Depends(get_current_user)) 
     if not analyses:
         return {"base_readiness_score": None, "evidence_score": 0, "evidence_count": 0}
     evidence = db.list_skill_evidence(user.id)
-    verified = sum(1 for item in evidence if item["verification_status"] != "self_reported")
+    verified = sum(
+        1 for item in evidence if item["verification_status"] != "self_reported"
+    )
     assessment_points = sum((item["assessment_score"] or 0) / 100 for item in evidence)
     # A transparent, capped support indicator rather than inflated readiness.
-    evidence_score = min(100, round((len(evidence) * 8) + (verified * 12) + (assessment_points * 10)))
+    evidence_score = min(
+        100, round((len(evidence) * 8) + (verified * 12) + (assessment_points * 10))
+    )
     return {
         "base_readiness_score": analyses[0]["readiness_score"],
         "evidence_score": evidence_score,
@@ -565,7 +602,9 @@ def get_evidence_aware_readiness(user: CurrentUser = Depends(get_current_user)) 
 
 
 @app.get("/me/profile")
-def get_my_profile(user: CurrentUserWithRole = Depends(get_current_user_with_role)) -> dict:
+def get_my_profile(
+    user: CurrentUserWithRole = Depends(get_current_user_with_role),
+) -> dict:
     return {
         "id": user.id,
         "email": user.email,
@@ -586,7 +625,9 @@ def list_users(
 
 
 class UpdateRoleRequest(BaseModel):
-    role: str = Field(..., description="One of: job_seeker, workforce_analyst, administrator")
+    role: str = Field(
+        ..., description="One of: job_seeker, workforce_analyst, administrator"
+    )
 
 
 @app.patch("/admin/users/{user_id}/role")
@@ -611,6 +652,7 @@ def update_user_role(
 # than its own hardcoded, ungrounded analysis heuristic. All new
 # endpoints are additive -- every endpoint above is unchanged.
 # --------------------------------------------------------------------------
+
 
 class UpdateProfileRequest(BaseModel):
     full_name: str | None = None
@@ -661,7 +703,9 @@ def create_career_analysis(
     from reskilling.schemas import SkillMatch
 
     occupations = recommender.list_target_occupations()
-    matched_occupation = career_analysis.find_matching_occupation(req.target_career, occupations)
+    matched_occupation = career_analysis.find_matching_occupation(
+        req.target_career, occupations
+    )
     current_skills_lower = {s.lower() for s in req.current_skills}
 
     if matched_occupation:
@@ -678,7 +722,9 @@ def create_career_analysis(
             match = taxonomy_lookup.get(skill.lower())
             if match:
                 sid, domain = match
-                user_skill_matches.append(SkillMatch(sid, skill, domain, skill, "exact", 1.0))
+                user_skill_matches.append(
+                    SkillMatch(sid, skill, domain, skill, "exact", 1.0)
+                )
 
         result = recommender.analyze_gap(user_skill_matches, matched_occupation)
         skill_gaps = career_analysis.build_grounded_skill_gaps(result.missing_skills)
@@ -700,15 +746,23 @@ def create_career_analysis(
                 recommender.taxonomy["skill_name"], recommender.taxonomy["skill_id"]
             )
         }
-        suggestions = llm_reasoning.classify_against_taxonomy(raw_suggestions, taxonomy_skills)
-        skill_gaps = career_analysis.build_fallback_skill_gaps(suggestions, current_skills_lower)
+        suggestions = llm_reasoning.classify_against_taxonomy(
+            raw_suggestions, taxonomy_skills
+        )
+        skill_gaps = career_analysis.build_fallback_skill_gaps(
+            suggestions, current_skills_lower
+        )
         readiness_score = career_analysis.compute_fallback_readiness_score(
             suggestions, current_skills_lower
         )
         matched_taxonomy = False
 
     summary = career_analysis.build_summary(
-        req.target_career, req.experience_level, readiness_score, skill_gaps, matched_taxonomy
+        req.target_career,
+        req.experience_level,
+        readiness_score,
+        skill_gaps,
+        matched_taxonomy,
     )
 
     learning_recommendations = []
@@ -717,7 +771,12 @@ def create_career_analysis(
         links = resources.merge_resources(curated, gap.skill, search_limit=1)
         for link in links:
             learning_recommendations.append(
-                {"title": link.title, "provider": link.provider, "url": link.url, "skill": gap.skill}
+                {
+                    "title": link.title,
+                    "provider": link.provider,
+                    "url": link.url,
+                    "skill": gap.skill,
+                }
             )
 
     analysis = {
@@ -762,7 +821,9 @@ def update_career_analysis_recommendations(
 ) -> dict:
     from reskilling import db
 
-    result = db.update_career_analysis_recommendations(analysis_id, user.id, req.recommendations)
+    result = db.update_career_analysis_recommendations(
+        analysis_id, user.id, req.recommendations
+    )
     if result is None:
         raise HTTPException(
             status_code=404,
@@ -777,8 +838,11 @@ def update_career_analysis_recommendations(
 # All are additive; every endpoint above is unchanged.
 # --------------------------------------------------------------------------
 
+
 class JobDescriptionRequest(BaseModel):
-    jd_text: str = Field(..., min_length=50, description="Raw text of the job description")
+    jd_text: str = Field(
+        ..., min_length=50, description="Raw text of the job description"
+    )
 
 
 @app.post("/me/analyse-jd")
@@ -805,6 +869,7 @@ def analyse_job_description(
     if llm_reasoning.GEMINI_API_KEY:
         try:
             import google.generativeai as genai  # type: ignore
+
             genai.configure(api_key=llm_reasoning.GEMINI_API_KEY)
             model = genai.GenerativeModel("gemini-2.0-flash")
             response = model.generate_content(
@@ -837,23 +902,34 @@ def analyse_job_description(
     for sk in gap_skills:
         sid = taxonomy_skills_map.get(sk.lower())
         priority = "high" if sk in jd_skills[:5] else "medium"
-        skill_gaps.append({
-            "skill": sk,
-            "skill_id": sid,
-            "priority": priority,
-            "reason": f"Required by the job description for {detected_title}.",
-        })
+        skill_gaps.append(
+            {
+                "skill": sk,
+                "skill_id": sid,
+                "priority": priority,
+                "reason": f"Required by the job description for {detected_title}.",
+            }
+        )
 
-    readiness_score = max(0, round(100 - (len(gap_skills) / max(len(jd_skills), 1)) * 100))
+    readiness_score = max(
+        0, round(100 - (len(gap_skills) / max(len(jd_skills), 1)) * 100)
+    )
 
     # --- 5. Build learning recommendations ---
     learning_recommendations = []
     for gap in skill_gaps[:10]:
-        curated = db.fetch_learning_resources(gap["skill_id"]) if gap.get("skill_id") else []
+        curated = (
+            db.fetch_learning_resources(gap["skill_id"]) if gap.get("skill_id") else []
+        )
         links = resources.merge_resources(curated, gap["skill"], search_limit=1)
         for link in links:
             learning_recommendations.append(
-                {"title": link.title, "provider": link.provider, "url": link.url, "skill": gap["skill"]}
+                {
+                    "title": link.title,
+                    "provider": link.provider,
+                    "url": link.url,
+                    "skill": gap["skill"],
+                }
             )
 
     analysis = {
@@ -906,7 +982,11 @@ def analyse_resume(
     detected_skills = [
         {
             "name": m.skill_name,
-            "confidence": "high" if m.confidence >= 0.85 else "medium" if m.confidence >= 0.6 else "low",
+            "confidence": "high"
+            if m.confidence >= 0.85
+            else "medium"
+            if m.confidence >= 0.6
+            else "low",
             "domain": m.domain,
         }
         for m in skill_matches
@@ -920,6 +1000,7 @@ def analyse_resume(
     if llm_reasoning.GEMINI_API_KEY:
         try:
             import google.generativeai as genai  # type: ignore
+
             genai.configure(api_key=llm_reasoning.GEMINI_API_KEY)
             model = genai.GenerativeModel("gemini-2.0-flash")
             response = model.generate_content(
@@ -962,16 +1043,82 @@ def market_pulse(career: str) -> dict:
     # Hard-coded illustrative data seeded from BLS OES 2023 annual wage survey.
     # In production, replace this dict with a real BLS API call or a cached DB table.
     CAREER_DATA: dict[str, dict] = {
-        "software engineer":        {"min": 85000,  "max": 175000, "trend": "growing",  "score": 88, "companies": ["Google", "Microsoft", "Amazon", "Meta", "Apple"]},
-        "data scientist":           {"min": 90000,  "max": 160000, "trend": "growing",  "score": 85, "companies": ["Netflix", "Airbnb", "Spotify", "LinkedIn", "IBM"]},
-        "machine learning engineer":{"min": 110000, "max": 200000, "trend": "growing",  "score": 92, "companies": ["OpenAI", "DeepMind", "Anthropic", "Nvidia", "Tesla"]},
-        "data analyst":             {"min": 60000,  "max": 110000, "trend": "growing",  "score": 78, "companies": ["Deloitte", "PwC", "KPMG", "McKinsey", "Accenture"]},
-        "cloud architect":          {"min": 120000, "max": 210000, "trend": "growing",  "score": 90, "companies": ["AWS", "Azure", "GCP", "Oracle", "IBM"]},
-        "cybersecurity analyst":    {"min": 80000,  "max": 150000, "trend": "growing",  "score": 87, "companies": ["Palo Alto", "CrowdStrike", "Cisco", "Fortinet", "BAE Systems"]},
-        "frontend developer":       {"min": 75000,  "max": 145000, "trend": "stable",   "score": 72, "companies": ["Shopify", "Stripe", "Vercel", "Figma", "Atlassian"]},
-        "devops engineer":          {"min": 95000,  "max": 165000, "trend": "growing",  "score": 83, "companies": ["HashiCorp", "GitLab", "Docker", "Red Hat", "AWS"]},
-        "product manager":          {"min": 100000, "max": 180000, "trend": "stable",   "score": 70, "companies": ["Google", "Meta", "Amazon", "Salesforce", "HubSpot"]},
-        "ux designer":              {"min": 70000,  "max": 130000, "trend": "stable",   "score": 65, "companies": ["Apple", "Adobe", "Figma", "IDEO", "McKinsey Design"]},
+        "software engineer": {
+            "min": 85000,
+            "max": 175000,
+            "trend": "growing",
+            "score": 88,
+            "companies": ["Google", "Microsoft", "Amazon", "Meta", "Apple"],
+        },
+        "data scientist": {
+            "min": 90000,
+            "max": 160000,
+            "trend": "growing",
+            "score": 85,
+            "companies": ["Netflix", "Airbnb", "Spotify", "LinkedIn", "IBM"],
+        },
+        "machine learning engineer": {
+            "min": 110000,
+            "max": 200000,
+            "trend": "growing",
+            "score": 92,
+            "companies": ["OpenAI", "DeepMind", "Anthropic", "Nvidia", "Tesla"],
+        },
+        "data analyst": {
+            "min": 60000,
+            "max": 110000,
+            "trend": "growing",
+            "score": 78,
+            "companies": ["Deloitte", "PwC", "KPMG", "McKinsey", "Accenture"],
+        },
+        "cloud architect": {
+            "min": 120000,
+            "max": 210000,
+            "trend": "growing",
+            "score": 90,
+            "companies": ["AWS", "Azure", "GCP", "Oracle", "IBM"],
+        },
+        "cybersecurity analyst": {
+            "min": 80000,
+            "max": 150000,
+            "trend": "growing",
+            "score": 87,
+            "companies": [
+                "Palo Alto",
+                "CrowdStrike",
+                "Cisco",
+                "Fortinet",
+                "BAE Systems",
+            ],
+        },
+        "frontend developer": {
+            "min": 75000,
+            "max": 145000,
+            "trend": "stable",
+            "score": 72,
+            "companies": ["Shopify", "Stripe", "Vercel", "Figma", "Atlassian"],
+        },
+        "devops engineer": {
+            "min": 95000,
+            "max": 165000,
+            "trend": "growing",
+            "score": 83,
+            "companies": ["HashiCorp", "GitLab", "Docker", "Red Hat", "AWS"],
+        },
+        "product manager": {
+            "min": 100000,
+            "max": 180000,
+            "trend": "stable",
+            "score": 70,
+            "companies": ["Google", "Meta", "Amazon", "Salesforce", "HubSpot"],
+        },
+        "ux designer": {
+            "min": 70000,
+            "max": 130000,
+            "trend": "stable",
+            "score": 65,
+            "companies": ["Apple", "Adobe", "Figma", "IDEO", "McKinsey Design"],
+        },
     }
 
     career_lower = career.lower().strip()
@@ -988,13 +1135,50 @@ def market_pulse(career: str) -> dict:
             "machine learning engineer": ["CUDA", "vLLM", "Triton", "RLHF", "RAG"],
             "data analyst": ["dbt", "Tableau", "Power BI", "Python", "SQL"],
             "cloud architect": ["Terraform", "Pulumi", "FinOps", "Zero Trust", "WASM"],
-            "cybersecurity analyst": ["SIEM", "SOAR", "Zero Trust", "Threat Intel", "Cloud Security"],
-            "frontend developer": ["React Server Components", "Astro", "Web Assembly", "Edge Functions", "AI UI"],
-            "devops engineer": ["Platform Engineering", "eBPF", "OpenTelemetry", "Backstage", "Argo CD"],
-            "product manager": ["AI Product", "PLG", "North Star Metrics", "User Research", "OKRs"],
-            "ux designer": ["AI UX", "Design Systems", "Prototyping", "Accessibility", "Motion Design"],
+            "cybersecurity analyst": [
+                "SIEM",
+                "SOAR",
+                "Zero Trust",
+                "Threat Intel",
+                "Cloud Security",
+            ],
+            "frontend developer": [
+                "React Server Components",
+                "Astro",
+                "Web Assembly",
+                "Edge Functions",
+                "AI UI",
+            ],
+            "devops engineer": [
+                "Platform Engineering",
+                "eBPF",
+                "OpenTelemetry",
+                "Backstage",
+                "Argo CD",
+            ],
+            "product manager": [
+                "AI Product",
+                "PLG",
+                "North Star Metrics",
+                "User Research",
+                "OKRs",
+            ],
+            "ux designer": [
+                "AI UX",
+                "Design Systems",
+                "Prototyping",
+                "Accessibility",
+                "Motion Design",
+            ],
         }
-        trending = next((v for k, v in trending_skills_map.items() if k in career_lower or career_lower in k), [])
+        trending = next(
+            (
+                v
+                for k, v in trending_skills_map.items()
+                if k in career_lower or career_lower in k
+            ),
+            [],
+        )
 
         return {
             "career": career,
@@ -1054,7 +1238,9 @@ def save_org_skill_framework(
     """
     from reskilling import db
 
-    frameworks = db.upsert_org_skill_frameworks(user.id, [fw.model_dump() for fw in req.frameworks])
+    frameworks = db.upsert_org_skill_frameworks(
+        user.id, [fw.model_dump() for fw in req.frameworks]
+    )
     return {"saved": len(frameworks), "frameworks": frameworks}
 
 
@@ -1100,7 +1286,9 @@ def sync_provider_connection_progress(
 ) -> dict:
     from reskilling import db
 
-    return db.sync_provider_progress(user.id, provider_name, [item.model_dump() for item in req.progress])
+    return db.sync_provider_progress(
+        user.id, provider_name, [item.model_dump() for item in req.progress]
+    )
 
 
 @app.post("/resources/{resource_id}/verify")
@@ -1131,6 +1319,6 @@ if os.path.exists(dist_dir):
         file_path = os.path.join(dist_dir, full_path)
         if os.path.isfile(file_path):
             return FileResponse(file_path)
-        
+
         # Otherwise fallback to index.html for client-side routing
         return FileResponse(os.path.join(dist_dir, "index.html"))

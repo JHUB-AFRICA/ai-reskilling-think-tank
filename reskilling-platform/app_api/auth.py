@@ -36,7 +36,11 @@ LOCAL_PREVIEW_EMAIL = os.environ.get("LOCAL_PREVIEW_EMAIL", "local-preview@examp
 # the local-token dev bypass is fully disabled -- any request carrying it
 # will be rejected with a 401 instead of silently getting preview-user access.
 # Never leave this unset in a production deployment.
-_LOCAL_PREVIEW_ENABLED = os.environ.get("DISABLE_LOCAL_PREVIEW", "").lower() not in ("1", "true", "yes")
+_LOCAL_PREVIEW_ENABLED = os.environ.get("DISABLE_LOCAL_PREVIEW", "").lower() not in (
+    "1",
+    "true",
+    "yes",
+)
 
 
 @dataclass
@@ -58,7 +62,9 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
     even when no Supabase JWT secret is configured.
     """
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or malformed Authorization header.")
+        raise HTTPException(
+            status_code=401, detail="Missing or malformed Authorization header."
+        )
 
     token = authorization.removeprefix("Bearer ").strip()
 
@@ -110,6 +116,7 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
 # get_current_user_with_role / require_role below.
 # --------------------------------------------------------------------------
 
+
 @dataclass
 class CurrentUserWithRole(CurrentUser):
     role: str
@@ -118,7 +125,9 @@ class CurrentUserWithRole(CurrentUser):
     experience_level: str | None = None
 
 
-def get_current_user_with_role(user: CurrentUser = Depends(get_current_user)) -> CurrentUserWithRole:
+def get_current_user_with_role(
+    user: CurrentUser = Depends(get_current_user),
+) -> CurrentUserWithRole:
     from reskilling import db
 
     profile = db.get_user_profile(user.id)

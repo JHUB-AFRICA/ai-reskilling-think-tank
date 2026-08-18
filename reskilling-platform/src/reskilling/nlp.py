@@ -31,7 +31,9 @@ from spacy.tokens import Doc
 
 from reskilling.schemas import SkillMatch
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 TAXONOMY_PATH = Path("data/processed/skills_taxonomy_v1.csv")
@@ -197,7 +199,9 @@ class SkillExtractor:
 
         exact_ids = {m.skill_id for m in exact_matches}
         embedding_matches = self._extract_embedding_fallback(doc, matched_token_idxs)
-        embedding_matches = [m for m in embedding_matches if m.skill_id not in exact_ids]
+        embedding_matches = [
+            m for m in embedding_matches if m.skill_id not in exact_ids
+        ]
 
         all_matches = exact_matches + embedding_matches
         logger.info(
@@ -218,4 +222,6 @@ if __name__ == "__main__":
         "client meetings. Proficient in Python and SQL."
     )
     for match in extractor.extract(sample):
-        print(f"{match.skill_name:30s} [{match.domain:12s}] via {match.method:9s} ({match.confidence})")
+        print(
+            f"{match.skill_name:30s} [{match.domain:12s}] via {match.method:9s} ({match.confidence})"
+        )

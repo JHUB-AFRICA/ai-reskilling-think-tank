@@ -28,7 +28,9 @@ import pandas as pd
 
 from reskilling.schemas import SkillMatch
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 TAXONOMY_PATH = Path("data/processed/skills_taxonomy_v1.csv")
@@ -79,8 +81,12 @@ class ReskillingRecommender:
         logger.info("Loading taxonomy for recommender from %s", taxonomy_path)
         self.taxonomy = pd.read_csv(taxonomy_path)
 
-        occupations = sorted(self.taxonomy["occupation_title"].dropna().unique().tolist())
-        logger.info("Recommender ready: %d occupations available as targets", len(occupations))
+        occupations = sorted(
+            self.taxonomy["occupation_title"].dropna().unique().tolist()
+        )
+        logger.info(
+            "Recommender ready: %d occupations available as targets", len(occupations)
+        )
 
     def list_target_occupations(self) -> list[str]:
         """Powers the Streamlit dropdown for 'target job' selection."""

@@ -27,7 +27,9 @@ from sqlalchemy.engine import Engine
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -146,7 +148,9 @@ def insert_xapi_statement(user_id: str | None, statement: dict) -> int:
                 "verb_display": statement["verb"]["display"]["en-US"],
                 "object_id": statement["object"]["id"],
                 "object_name": statement["object"]["definition"]["name"]["en-US"],
-                "result_extensions": json.dumps(statement.get("result", {}).get("extensions")),
+                "result_extensions": json.dumps(
+                    statement.get("result", {}).get("extensions")
+                ),
             },
         )
         return result.scalar_one()
@@ -155,6 +159,7 @@ def insert_xapi_statement(user_id: str | None, statement: dict) -> int:
 # --------------------------------------------------------------------------
 # Role-based access (profiles table, db/migrations/004)
 # --------------------------------------------------------------------------
+
 
 def get_user_profile(user_id: str) -> dict | None:
     """
@@ -168,13 +173,17 @@ def get_user_profile(user_id: str) -> dict | None:
     from sqlalchemy import text
 
     with get_engine().connect() as conn:
-        row = conn.execute(
-            text(
-                "select id, email, role, full_name, target_career, experience_level, "
-                "created_at, updated_at from profiles where id = :user_id"
-            ),
-            {"user_id": user_id},
-        ).mappings().first()
+        row = (
+            conn.execute(
+                text(
+                    "select id, email, role, full_name, target_career, experience_level, "
+                    "created_at, updated_at from profiles where id = :user_id"
+                ),
+                {"user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
         return dict(row) if row else None
 
 
@@ -188,7 +197,9 @@ def list_all_profiles() -> list[dict]:
 
     with get_engine().connect() as conn:
         rows = conn.execute(
-            text("select id, email, role, created_at from profiles order by created_at desc")
+            text(
+                "select id, email, role, created_at from profiles order by created_at desc"
+            )
         ).mappings()
         return [dict(row) for row in rows]
 
@@ -211,7 +222,10 @@ def update_user_role(user_id: str, new_role: str) -> None:
 # Learning resources (learning_resources table, db/migrations/005)
 # --------------------------------------------------------------------------
 
-def fetch_learning_resources(skill_id: str, skill_name: str | None = None) -> list[dict]:
+
+def fetch_learning_resources(
+    skill_id: str, skill_name: str | None = None
+) -> list[dict]:
     from sqlalchemy import text
 
     with get_engine().connect() as conn:
@@ -223,7 +237,10 @@ def fetch_learning_resources(skill_id: str, skill_name: str | None = None) -> li
                 "from learning_resources where skill_id = :skill_id or (:skill_name is not null and skill_name ilike :skill_name) "
                 "order by case verification_status when 'verified' then 0 when 'provider_synced' then 1 else 2 end, created_at"
             ),
-            {"skill_id": skill_id, "skill_name": f"%{skill_name}%" if skill_name else None},
+            {
+                "skill_id": skill_id,
+                "skill_name": f"%{skill_name}%" if skill_name else None,
+            },
         ).mappings()
         return [dict(row) for row in rows]
 
@@ -274,9 +291,10 @@ def upsert_provider_connection(user_id: str, provider: dict) -> dict:
     from sqlalchemy import text
 
     with get_engine().begin() as conn:
-        row = conn.execute(
-            text(
-                """
+        row = (
+            conn.execute(
+                text(
+                    """
                 insert into provider_connections
                     (user_id, provider_name, provider_account, access_token, last_sync_at)
                 values (:user_id, :provider_name, :provider_account, :access_token, null)
@@ -286,14 +304,17 @@ def upsert_provider_connection(user_id: str, provider: dict) -> dict:
                     updated_at = now()
                 returning id, user_id, provider_name, provider_account, connected_at, last_sync_at, created_at, updated_at
                 """
-            ),
-            {
-                "user_id": user_id,
-                "provider_name": provider["provider_name"],
-                "provider_account": provider.get("provider_account"),
-                "access_token": provider.get("access_token"),
-            },
-        ).mappings().one()
+                ),
+                {
+                    "user_id": user_id,
+                    "provider_name": provider["provider_name"],
+                    "provider_account": provider.get("provider_account"),
+                    "access_token": provider.get("access_token"),
+                },
+            )
+            .mappings()
+            .one()
+        )
         return dict(row)
 
 
@@ -311,7 +332,9 @@ def list_provider_connections(user_id: str) -> list[dict]:
         return [dict(row) for row in rows]
 
 
-def sync_provider_progress(user_id: str, provider_name: str, progress: list[dict] | None = None) -> dict:
+def sync_provider_progress(
+    user_id: str, provider_name: str, progress: list[dict] | None = None
+) -> dict:
     from sqlalchemy import text
 
     updates = 0
@@ -356,10 +379,14 @@ def verify_learning_resource_link(resource_id: int) -> dict:
     from sqlalchemy import text
 
     with get_engine().connect() as conn:
-        row = conn.execute(
-            text("select id, url from learning_resources where id = :resource_id"),
-            {"resource_id": resource_id},
-        ).mappings().first()
+        row = (
+            conn.execute(
+                text("select id, url from learning_resources where id = :resource_id"),
+                {"resource_id": resource_id},
+            )
+            .mappings()
+            .first()
+        )
         if row is None:
             raise ValueError("Resource not found")
         url = row["url"]
@@ -371,13 +398,17 @@ def verify_learning_resource_link(resource_id: int) -> dict:
         status = "broken"
 
     with get_engine().begin() as conn:
-        result = conn.execute(
-            text(
-                "update learning_resources set last_verified_at = now(), last_link_status = :status "
-                "where id = :resource_id returning id, last_verified_at, last_link_status"
-            ),
-            {"resource_id": resource_id, "status": status},
-        ).mappings().one()
+        result = (
+            conn.execute(
+                text(
+                    "update learning_resources set last_verified_at = now(), last_link_status = :status "
+                    "where id = :resource_id returning id, last_verified_at, last_link_status"
+                ),
+                {"resource_id": resource_id, "status": status},
+            )
+            .mappings()
+            .one()
+        )
         return dict(result)
 
 
@@ -386,7 +417,9 @@ def list_skill_evidence(user_id: str) -> list[dict]:
 
     with get_engine().connect() as conn:
         rows = conn.execute(
-            text("select id, skill_id, skill_name, evidence_type, evidence_url, description, assessment_score, verification_status, created_at from skill_evidence where user_id = :user_id order by created_at desc"),
+            text(
+                "select id, skill_id, skill_name, evidence_type, evidence_url, description, assessment_score, verification_status, created_at from skill_evidence where user_id = :user_id order by created_at desc"
+            ),
             {"user_id": user_id},
         ).mappings()
         return [dict(row) for row in rows]
@@ -404,7 +437,9 @@ def list_learning_resources(
     clauses = ["1=1"]
     params: dict = {"limit": min(max(limit, 1), 100)}
     if query:
-        clauses.append("(title ilike :query or provider ilike :query or description ilike :query)")
+        clauses.append(
+            "(title ilike :query or provider ilike :query or description ilike :query)"
+        )
         params["query"] = f"%{query.strip()}%"
     if skill:
         clauses.append("skill_name ilike :skill")
@@ -440,9 +475,10 @@ def upsert_user_learning_item(user_id: str, resource_id: int, payload: dict) -> 
         raise ValueError("progress_percent must be between 0 and 100.")
 
     with get_engine().begin() as conn:
-        row = conn.execute(
-            text(
-                """
+        row = (
+            conn.execute(
+                text(
+                    """
                 insert into user_learning_items
                     (user_id, resource_id, analysis_id, status, progress_percent,
                      time_spent_minutes, notes, evidence_url, completion_source, started_at, completed_at)
@@ -465,19 +501,26 @@ def upsert_user_learning_item(user_id: str, resource_id: int, payload: dict) -> 
                           time_spent_minutes, notes, evidence_url, completion_source,
                           started_at, completed_at, created_at, updated_at
                 """
-            ),
-            {
-                "user_id": user_id,
-                "resource_id": resource_id,
-                "analysis_id": payload.get("analysis_id"),
-                "status": status,
-                "progress_percent": progress,
-                "time_spent_minutes": max(0, int(payload.get("time_spent_minutes", 0))),
-                "notes": payload.get("notes"),
-                "evidence_url": payload.get("evidence_url"),
-                "completion_source": payload.get("completion_source", "self_reported"),
-            },
-        ).mappings().one()
+                ),
+                {
+                    "user_id": user_id,
+                    "resource_id": resource_id,
+                    "analysis_id": payload.get("analysis_id"),
+                    "status": status,
+                    "progress_percent": progress,
+                    "time_spent_minutes": max(
+                        0, int(payload.get("time_spent_minutes", 0))
+                    ),
+                    "notes": payload.get("notes"),
+                    "evidence_url": payload.get("evidence_url"),
+                    "completion_source": payload.get(
+                        "completion_source", "self_reported"
+                    ),
+                },
+            )
+            .mappings()
+            .one()
+        )
         return dict(row)
 
 
@@ -511,6 +554,7 @@ def list_user_learning_items(user_id: str) -> list[dict]:
 # own gap_analyses/analyze-gap flow.
 # --------------------------------------------------------------------------
 
+
 def upsert_profile_details(
     user_id: str,
     email: str | None = None,
@@ -527,9 +571,10 @@ def upsert_profile_details(
     from sqlalchemy import text
 
     with get_engine().begin() as conn:
-        row = conn.execute(
-            text(
-                """
+        row = (
+            conn.execute(
+                text(
+                    """
                 insert into profiles (id, email, full_name, target_career, experience_level)
                 values (:user_id, :email, :full_name, :target_career, :experience_level)
                 on conflict (id) do update set
@@ -538,15 +583,18 @@ def upsert_profile_details(
                     experience_level = coalesce(excluded.experience_level, profiles.experience_level)
                 returning id, email, role, full_name, target_career, experience_level, created_at, updated_at
                 """
-            ),
-            {
-                "user_id": user_id,
-                "email": email or f"{user_id}@local.invalid",
-                "full_name": full_name,
-                "target_career": target_career,
-                "experience_level": experience_level,
-            },
-        ).mappings().first()
+                ),
+                {
+                    "user_id": user_id,
+                    "email": email or f"{user_id}@local.invalid",
+                    "full_name": full_name,
+                    "target_career": target_career,
+                    "experience_level": experience_level,
+                },
+            )
+            .mappings()
+            .first()
+        )
         return dict(row) if row else {}
 
 
@@ -556,9 +604,10 @@ def insert_career_analysis(user_id: str, analysis: dict) -> dict:
     from sqlalchemy import text
 
     with get_engine().begin() as conn:
-        row = conn.execute(
-            text(
-                """
+        row = (
+            conn.execute(
+                text(
+                    """
                 insert into career_analyses
                     (user_id, current_career, target_career, experience_level,
                      current_skills, goals, readiness_score, summary,
@@ -571,21 +620,26 @@ def insert_career_analysis(user_id: str, analysis: dict) -> dict:
                           current_skills, goals, readiness_score, summary,
                           skill_gaps, learning_recommendations, matched_taxonomy, created_at
                 """
-            ),
-            {
-                "user_id": user_id,
-                "current_career": analysis["current_career"],
-                "target_career": analysis["target_career"],
-                "experience_level": analysis["experience_level"],
-                "current_skills": analysis["current_skills"],
-                "goals": analysis.get("goals"),
-                "readiness_score": analysis["readiness_score"],
-                "summary": analysis.get("summary"),
-                "skill_gaps": json.dumps(analysis["skill_gaps"]),
-                "learning_recommendations": json.dumps(analysis["learning_recommendations"]),
-                "matched_taxonomy": analysis["matched_taxonomy"],
-            },
-        ).mappings().first()
+                ),
+                {
+                    "user_id": user_id,
+                    "current_career": analysis["current_career"],
+                    "target_career": analysis["target_career"],
+                    "experience_level": analysis["experience_level"],
+                    "current_skills": analysis["current_skills"],
+                    "goals": analysis.get("goals"),
+                    "readiness_score": analysis["readiness_score"],
+                    "summary": analysis.get("summary"),
+                    "skill_gaps": json.dumps(analysis["skill_gaps"]),
+                    "learning_recommendations": json.dumps(
+                        analysis["learning_recommendations"]
+                    ),
+                    "matched_taxonomy": analysis["matched_taxonomy"],
+                },
+            )
+            .mappings()
+            .first()
+        )
         return dict(row)
 
 
@@ -633,9 +687,10 @@ def update_career_analysis_recommendations(
     from sqlalchemy import text
 
     with get_engine().begin() as conn:
-        row = conn.execute(
-            text(
-                """
+        row = (
+            conn.execute(
+                text(
+                    """
                 update career_analyses
                 set learning_recommendations = :recommendations
                 where id = :analysis_id and user_id = :user_id
@@ -643,13 +698,16 @@ def update_career_analysis_recommendations(
                           current_skills, goals, readiness_score, summary,
                           skill_gaps, learning_recommendations, matched_taxonomy, created_at
                 """
-            ),
-            {
-                "analysis_id": analysis_id,
-                "user_id": user_id,
-                "recommendations": json.dumps(recommendations),
-            },
-        ).mappings().first()
+                ),
+                {
+                    "analysis_id": analysis_id,
+                    "user_id": user_id,
+                    "recommendations": json.dumps(recommendations),
+                },
+            )
+            .mappings()
+            .first()
+        )
         return dict(row) if row else None
 
 
