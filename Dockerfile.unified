@@ -48,7 +48,8 @@ RUN pip install --retries 5 --timeout 60 \
     "sqlalchemy>=2.0" \
     "psycopg2-binary>=2.9" \
     "pyjwt>=2.9" \
-    "google-genai>=0.3"
+    "google-genai>=0.3" \
+    "streamlit>=1.35"
 
 # Download spaCy NLP model
 RUN python -m spacy download en_core_web_md

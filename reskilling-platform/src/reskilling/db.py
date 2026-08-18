@@ -169,7 +169,10 @@ def get_user_profile(user_id: str) -> dict | None:
 
     with get_engine().connect() as conn:
         row = conn.execute(
-            text("select id, email, role from profiles where id = :user_id"),
+            text(
+                "select id, email, role, full_name, target_career, experience_level, "
+                "created_at, updated_at from profiles where id = :user_id"
+            ),
             {"user_id": user_id},
         ).mappings().first()
         return dict(row) if row else None
@@ -510,6 +513,7 @@ def list_user_learning_items(user_id: str) -> list[dict]:
 
 def upsert_profile_details(
     user_id: str,
+    email: str | None = None,
     full_name: str | None = None,
     target_career: str | None = None,
     experience_level: str | None = None,
@@ -526,16 +530,18 @@ def upsert_profile_details(
         row = conn.execute(
             text(
                 """
-                update profiles
-                set full_name = coalesce(:full_name, full_name),
-                    target_career = coalesce(:target_career, target_career),
-                    experience_level = coalesce(:experience_level, experience_level)
-                where id = :user_id
+                insert into profiles (id, email, full_name, target_career, experience_level)
+                values (:user_id, :email, :full_name, :target_career, :experience_level)
+                on conflict (id) do update set
+                    full_name = coalesce(excluded.full_name, profiles.full_name),
+                    target_career = coalesce(excluded.target_career, profiles.target_career),
+                    experience_level = coalesce(excluded.experience_level, profiles.experience_level)
                 returning id, email, role, full_name, target_career, experience_level, created_at, updated_at
                 """
             ),
             {
                 "user_id": user_id,
+                "email": email or f"{user_id}@local.invalid",
                 "full_name": full_name,
                 "target_career": target_career,
                 "experience_level": experience_level,

@@ -18,11 +18,12 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "pyjwt>=2.9",
     "google-genai>=0.3",
+    "streamlit>=1.35",
 ]
 
 [project.optional-dependencies]
 # Streamlit web UI (legacy — not used by the Docker/FastAPI server)
-ui = ["streamlit>=1.35"]
+ui = []
 dev = ["pytest", "ruff", "ipykernel", "httpx2"]
 
 [tool.ruff]

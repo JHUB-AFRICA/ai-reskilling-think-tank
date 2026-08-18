@@ -133,7 +133,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
           ))}
           {/* Settings — plain anchor so hash-scroll works */}
           <a
-            href="/profile#settings"
+            href="/settings"
             className="flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 group text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
           >
             <Settings size={18} className="shrink-0 transition-transform group-hover:scale-105" />

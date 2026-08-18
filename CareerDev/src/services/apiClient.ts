@@ -9,6 +9,9 @@
 import { supabase } from './supabase'
 
 function normalizeApiUrl(rawUrl?: string): string {
+  if (rawUrl === '') {
+    return typeof window === 'undefined' ? 'http://localhost:8000' : window.location.origin
+  }
   if (!rawUrl || !rawUrl.trim()) return 'http://localhost:8000'
   let url = rawUrl.trim()
   if (!url.startsWith('http://') && !url.startsWith('https://')) {

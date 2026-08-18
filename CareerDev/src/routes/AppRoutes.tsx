@@ -12,6 +12,7 @@ import Login from '../pages/Login/Login'
 import LRSFeed from '../pages/LRSFeed/LRSFeed'
 import NotFound from '../pages/NotFound'
 import Profile from '../pages/Profile/Profile'
+import Settings from '../pages/Settings/Settings'
 import Register from '../pages/Register/Register'
 import AuthCallback from '../pages/AuthCallback/AuthCallback'
 import JobDescription from '../pages/JobDescription/JobDescription'
@@ -48,6 +49,7 @@ function AppRoutes() {
           <Route path="/history" element={<History />} />
           <Route path="/activity" element={<LRSFeed />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/hr-portal" element={<HRPortal />} />
         </Route>

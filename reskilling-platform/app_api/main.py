@@ -564,7 +564,14 @@ def get_evidence_aware_readiness(user: CurrentUser = Depends(get_current_user)) 
 
 @app.get("/me/profile")
 def get_my_profile(user: CurrentUserWithRole = Depends(get_current_user_with_role)) -> dict:
-    return {"id": user.id, "email": user.email, "role": user.role}
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "full_name": user.full_name,
+        "target_career": user.target_career,
+        "experience_level": user.experience_level,
+    }
 
 
 @app.get("/admin/users")
@@ -617,6 +624,7 @@ def update_my_profile(
 
     return db.upsert_profile_details(
         user_id=user.id,
+        email=user.email,
         full_name=req.full_name,
         target_career=req.target_career,
         experience_level=req.experience_level,

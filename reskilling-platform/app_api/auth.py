@@ -13,7 +13,6 @@ follow still depend on it).
 
 from __future__ import annotations
 
-import base64
 import os
 from dataclasses import dataclass
 
@@ -24,19 +23,20 @@ from fastapi import Depends, Header, HTTPException
 load_dotenv()
 
 _raw_jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
-# Supabase stores the JWT secret as a base64url-encoded string in the dashboard.
-# PyJWT >= 2.x needs the raw bytes for HS256 verification, so we decode it here.
-# If the value is already plain text (not valid base64) we fall back to the raw string.
-try:
-    # Supabase secrets may use standard or URL-safe base64; add padding if needed.
-    _padded = _raw_jwt_secret + "==" * ((-len(_raw_jwt_secret)) % 4)
-    SUPABASE_JWT_SECRET: bytes | str = base64.b64decode(_padded, altchars=b"-_")
-except Exception:
-    SUPABASE_JWT_SECRET = _raw_jwt_secret
+# Supabase signs JWTs using the raw JWT secret string (as shown in Project Settings
+# ? Data API ? JWT Secret) -- NOT the base64-decoded bytes of that string.
+# PyJWT 2.x must receive the same raw string that Supabase used for signing,
+# otherwise it cannot verify the signature and raises InvalidAlgorithmError.
+SUPABASE_JWT_SECRET: str = _raw_jwt_secret
 JWT_AUDIENCE = "authenticated"  # Supabase's standard audience claim for access tokens
 LOCAL_PREVIEW_TOKEN = "local-token"
 LOCAL_PREVIEW_USER_ID = os.environ.get("LOCAL_PREVIEW_USER_ID", "local-preview-user")
 LOCAL_PREVIEW_EMAIL = os.environ.get("LOCAL_PREVIEW_EMAIL", "local-preview@example.com")
+# When DISABLE_LOCAL_PREVIEW=true (set automatically in docker-compose.yml),
+# the local-token dev bypass is fully disabled -- any request carrying it
+# will be rejected with a 401 instead of silently getting preview-user access.
+# Never leave this unset in a production deployment.
+_LOCAL_PREVIEW_ENABLED = os.environ.get("DISABLE_LOCAL_PREVIEW", "").lower() not in ("1", "true", "yes")
 
 
 @dataclass
@@ -63,6 +63,14 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
     token = authorization.removeprefix("Bearer ").strip()
 
     if token == LOCAL_PREVIEW_TOKEN:
+        if not _LOCAL_PREVIEW_ENABLED:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Local preview token is disabled in this deployment. "
+                    "Sign in with a real Supabase account."
+                ),
+            )
         return CurrentUser(id=LOCAL_PREVIEW_USER_ID, email=LOCAL_PREVIEW_EMAIL)
 
     if not SUPABASE_JWT_SECRET:
@@ -105,6 +113,9 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
 @dataclass
 class CurrentUserWithRole(CurrentUser):
     role: str
+    full_name: str | None = None
+    target_career: str | None = None
+    experience_level: str | None = None
 
 
 def get_current_user_with_role(user: CurrentUser = Depends(get_current_user)) -> CurrentUserWithRole:
@@ -125,7 +136,14 @@ def get_current_user_with_role(user: CurrentUser = Depends(get_current_user)) ->
             ),
         )
 
-    return CurrentUserWithRole(id=user.id, email=user.email, role=profile["role"])
+    return CurrentUserWithRole(
+        id=user.id,
+        email=user.email,
+        role=profile["role"],
+        full_name=profile.get("full_name"),
+        target_career=profile.get("target_career"),
+        experience_level=profile.get("experience_level"),
+    )
 
 
 def require_role(*allowed_roles: str):
