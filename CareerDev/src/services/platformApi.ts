@@ -4,7 +4,7 @@
 // CareerDev. Built on the same apiClient/apiError pattern as the other
 // service files so error handling and auth token injection are consistent.
 
-import { apiClient } from './apiClient'
+import { apiClient, API_BASE_URL } from './apiClient'
 
 // ── Health ────────────────────────────────────────────────────────────────
 
@@ -103,10 +103,7 @@ export async function streamCareerGuidance(
   req: CareerGuidanceRequest,
   token: string,
 ): Promise<ReadableStream<Uint8Array>> {
-  const apiBase =
-    (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000'
-
-  const res = await fetch(`${apiBase}/me/career-guidance/stream`, {
+  const res = await fetch(`${API_BASE_URL}/me/career-guidance/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -8,7 +8,16 @@
 // either side for that part.
 import { supabase } from './supabase'
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000'
+function normalizeApiUrl(rawUrl?: string): string {
+  if (!rawUrl || !rawUrl.trim()) return 'http://localhost:8000'
+  let url = rawUrl.trim()
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`
+  }
+  return url.replace(/\/+$/, '')
+}
+
+export const API_BASE_URL = normalizeApiUrl(import.meta.env.VITE_API_URL as string | undefined)
 
 export class ApiError extends Error {
   status: number
