@@ -32,6 +32,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from reskilling.lrs import LRS_LOG_PATH, log_gap_analysis_event, log_resume_upload_event
@@ -792,7 +794,7 @@ def analyse_job_description(
     source is the JD.  Falls back to Gemini reasoning when the detected role
     doesn't match the O*NET taxonomy (same fallback path as /me/career-analysis).
     """
-    from reskilling import career_analysis, db, llm_reasoning, resources
+    from reskilling import db, llm_reasoning, resources
 
     # --- 1. Extract skills mentioned in the JD using the NLP extractor ---
     jd_skill_matches = extractor.extract(req.jd_text)
@@ -1114,10 +1116,6 @@ def verify_resource_link(resource_id: int) -> dict:
 # --------------------------------------------------------------------------
 # Unified Docker UI Serving (React SPA)
 # --------------------------------------------------------------------------
-import os
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
 # We mount the built frontend inside the "static" directory
 dist_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.exists(dist_dir):
