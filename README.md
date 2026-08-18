@@ -4,19 +4,19 @@
 
 **Grounded skills-gap analysis and AI-powered reskilling pathways for workers navigating AI-driven automation.**
 
-[![Backend CI](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/frontend-ci.yml)
-[![Deploy](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/deploy.yml/badge.svg)](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/actions/workflows/deploy.yml)
+[![Backend CI](https://github.com/Brian-code-lab/reskilling-platform/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Brian-code-lab/reskilling-platform/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/munenejoel388/CareerDev/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/munenejoel388/CareerDev/actions/workflows/frontend-ci.yml)
+[![Deploy](https://github.com/munenejoel388/CareerDev/actions/workflows/deploy.yml/badge.svg)](https://github.com/munenejoel388/CareerDev/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-[**🚀 Live App**](https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/) &nbsp;|&nbsp;
-[**📖 API Docs**](https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/docs) &nbsp;|&nbsp;
-[**🐛 Report Bug**](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/issues/new?template=bug_report.md) &nbsp;|&nbsp;
-[**💡 Request Feature**](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/issues/new?template=feature_request.md)
+[**🚀 Live App**](https://brian-code-lab.github.io/CareerDev/) &nbsp;|&nbsp;
+[**📖 API Docs**](https://brian-code-lab.github.io/reskilling-platform/docs) &nbsp;|&nbsp;
+[**🐛 Report Bug**](https://github.com/Brian-code-lab/reskilling-platform/issues/new?template=bug_report.md) &nbsp;|&nbsp;
+[**💡 Request Feature**](https://github.com/Brian-code-lab/reskilling-platform/issues/new?template=feature_request.md)
 
 </div>
 
@@ -219,7 +219,7 @@ graph TB
 ```mermaid
 graph LR
     subgraph github["GitHub"]
-        repo["Repository\nJHUB-AFRICA/ai-reskilling-think-tank"]
+        repo["Repository\nBrian-code-lab/ai-reskilling-platform"]
         actions["GitHub Actions\nCI/CD Pipelines"]
         pages["GitHub Pages\nFrontend Hosting"]
     end
@@ -691,8 +691,8 @@ curl -X POST https://ai-reskilling-api.up.railway.app/me/career-analysis \
 ### Clone
 
 ```bash
-git clone https://github.com/JHUB-AFRICA/ai-reskilling-think-tank.git
-cd ai-reskilling-think-tank
+git clone https://github.com/Brian-code-lab/ai-reskilling-platform.git
+cd ai-reskilling-platform
 ```
 
 ---
@@ -921,6 +921,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
 
 Built with ❤️ to help workers navigate AI-driven change.
 
-**[🚀 Try the App](https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/)** · **[📖 API Docs](https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/docs)** · **[🐛 Report an Issue](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/issues)**
+**[🚀 Try the App](https://munenejoel388.github.io/CareerDev/)** · **[📖 API Docs](https://ai-reskilling-api.up.railway.app/docs)** · **[🐛 Report an Issue](https://github.com/Brian-code-lab/reskilling-platform/issues)**
 
 </div>

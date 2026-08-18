@@ -27,9 +27,7 @@ import re
 from google import genai
 from google.genai import types
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -80,9 +78,7 @@ def sanitize_user_text(text: str) -> str:
     """
     truncated = text[:MAX_INPUT_CHARS]
     if _SUSPICIOUS_RE.search(truncated):
-        return (
-            f"[content flagged as a possible instruction-injection attempt] {truncated}"
-        )
+        return f"[content flagged as a possible instruction-injection attempt] {truncated}"
     return truncated
 
 
@@ -92,9 +88,7 @@ class GeminiNotConfiguredError(RuntimeError):
 
 
 class SkillSuggestion:
-    def __init__(
-        self, skill_name: str, status: str, matched_skill_id: str | None = None
-    ):
+    def __init__(self, skill_name: str, status: str, matched_skill_id: str | None = None):
         self.skill_name = skill_name
         self.status = status  # "taxonomy_match" or "emerging"
         self.matched_skill_id = matched_skill_id
@@ -127,9 +121,7 @@ def _extract_json_array(raw_text: str) -> list[str]:
     try:
         parsed = json.loads(raw_text.strip())
     except json.JSONDecodeError:
-        logger.warning(
-            "Gemini response was not valid JSON, discarding: %r", raw_text[:200]
-        )
+        logger.warning("Gemini response was not valid JSON, discarding: %r", raw_text[:200])
         return []
 
     if not isinstance(parsed, list):
@@ -146,9 +138,7 @@ def suggest_skills_for_goal(current_skills: list[str], career_goal: str) -> list
     this function's output must never reach a user directly."""
     client = _get_client()
 
-    sanitized_skills = sanitize_user_text(
-        ", ".join(current_skills) if current_skills else "(none listed)"
-    )
+    sanitized_skills = sanitize_user_text(", ".join(current_skills) if current_skills else "(none listed)")
     sanitized_goal = sanitize_user_text(career_goal)
 
     user_prompt = f"Current skills: {sanitized_skills}\nCareer goal: {sanitized_goal}"
@@ -187,9 +177,7 @@ def stream_reasoning_chunks(current_skills: list[str], career_goal: str):
     """
     client = _get_client()
 
-    sanitized_skills = sanitize_user_text(
-        ", ".join(current_skills) if current_skills else "(none listed)"
-    )
+    sanitized_skills = sanitize_user_text(", ".join(current_skills) if current_skills else "(none listed)")
     sanitized_goal = sanitize_user_text(career_goal)
     user_prompt = f"Current skills: {sanitized_skills}\nCareer goal: {sanitized_goal}"
 

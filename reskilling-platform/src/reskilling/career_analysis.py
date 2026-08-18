@@ -33,18 +33,7 @@ from dataclasses import dataclass
 # Gemini-assisted path.
 MATCH_THRESHOLD = 0.6
 
-_FILLER_WORDS = {
-    "a",
-    "an",
-    "the",
-    "and",
-    "or",
-    "of",
-    "in",
-    "for",
-    "specialist",
-    "professional",
-}
+_FILLER_WORDS = {"a", "an", "the", "and", "or", "of", "in", "for", "specialist", "professional"}
 
 
 def _normalize_words(text: str) -> set[str]:
@@ -85,12 +74,7 @@ class SkillGapEntry:
     skill_id: str | None = None  # None for emerging (non-taxonomy) suggestions
 
     def to_dict(self) -> dict:
-        return {
-            "skill": self.skill,
-            "priority": self.priority,
-            "reason": self.reason,
-            "skill_id": self.skill_id,
-        }
+        return {"skill": self.skill, "priority": self.priority, "reason": self.reason, "skill_id": self.skill_id}
 
 
 def priority_from_importance(importance: float) -> str:
@@ -117,9 +101,7 @@ def build_grounded_skill_gaps(missing_skills: list) -> list[SkillGapEntry]:
     ]
 
 
-def build_fallback_skill_gaps(
-    suggestions: list, current_skills_lower: set[str]
-) -> list[SkillGapEntry]:
+def build_fallback_skill_gaps(suggestions: list, current_skills_lower: set[str]) -> list[SkillGapEntry]:
     """suggestions: list of llm_reasoning.SkillSuggestion objects, already
     classified as taxonomy_match/emerging. Only genuinely missing
     suggestions (not already in the user's stated skills) become gaps."""
@@ -155,9 +137,7 @@ def build_fallback_skill_gaps(
     return gaps
 
 
-def compute_fallback_readiness_score(
-    suggestions: list, current_skills_lower: set[str]
-) -> int:
+def compute_fallback_readiness_score(suggestions: list, current_skills_lower: set[str]) -> int:
     """
     Grounded in real overlap, never an LLM-invented number: what
     fraction of the suggested-relevant skills does the user already
@@ -166,9 +146,7 @@ def compute_fallback_readiness_score(
     """
     if not suggestions:
         return 0
-    matched = sum(
-        1 for s in suggestions if s.skill_name.lower() in current_skills_lower
-    )
+    matched = sum(1 for s in suggestions if s.skill_name.lower() in current_skills_lower)
     return round((matched / len(suggestions)) * 100)
 
 

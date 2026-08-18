@@ -30,9 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 LRS_LOG_PATH = Path("data/processed/xapi_statements.jsonl")
@@ -147,9 +145,7 @@ def log_gap_analysis_event(
     return statement
 
 
-def log_resume_upload_event(
-    actor_email: str, skill_count: int, log_path: Path = LRS_LOG_PATH
-) -> dict:
+def log_resume_upload_event(actor_email: str, skill_count: int, log_path: Path = LRS_LOG_PATH) -> dict:
     statement = build_statement(
         actor_email=actor_email,
         verb_key="experienced",

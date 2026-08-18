@@ -1,70 +1,43 @@
 # ============================================================
-# Unified Dockerfile — AI Reskilling Think Tank Platform
+# Unified Dockerfile — AI Reskilling Platform
 # ============================================================
-# Builds the React/Vite frontend and the FastAPI backend into
-# a SINGLE image. Uvicorn serves both the REST API at /api/*
-# and the compiled React SPA at every other path.
+# This builds the React frontend and Python backend into a single image.
 #
-# Build (from repo root):
-#   docker build \
-#     --build-arg VITE_SUPABASE_URL=https://xxx.supabase.co \
-#     --build-arg VITE_SUPABASE_ANON_KEY=eyJ... \
-#     -t ghcr.io/<owner>/<repo>:latest \
-#     -f Dockerfile.unified .
-#
-# Run locally:
-#   docker run -p 8000:8000 --env-file reskilling-platform/.env \
-#     ghcr.io/<owner>/<repo>:latest
-#
-# The app is then available at http://localhost:8000
+# Build: docker build -t reskilling-platform-full -f Dockerfile.unified .
+# Run:   docker run -p 8000:8000 --env-file .env reskilling-platform-full
 # ============================================================
 
-# ── Stage 1: Build the React/Vite application ───────────────
+# ── Stage 1: Build the React application ────────────────────
 FROM node:20-alpine AS frontend-builder
-
-WORKDIR /frontend
-
-# Install deps first (cache-friendly layer)
+WORKDIR /app
 COPY CareerDev/package.json CareerDev/package-lock.json ./
 RUN npm install --prefer-offline --no-audit --no-fund
-
-# Copy source
 COPY CareerDev/ .
 
-# Build-time environment variables injected via --build-arg.
-# VITE_API_URL is intentionally left empty so the SPA uses
-# *relative* paths (e.g. /api/...) — hitting the same origin
-# that serves the HTML, avoiding CORS entirely.
+# Build args
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
+# Use an empty API URL so the frontend uses relative paths (hits the same server)
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-# Override the GitHub-Pages base path so assets load from root
-ENV VITE_BASE_PATH=/
 ENV VITE_API_URL=""
 
-# Build → outputs to /frontend/dist
 RUN npm run build
 
-# ── Stage 2: FastAPI backend + serve compiled SPA ───────────
-FROM python:3.11-slim AS final
-
+# ── Stage 2: Build the FastAPI backend & serve ──────────────
+FROM python:3.11-slim
 WORKDIR /app
 
-# System packages required by psycopg2 / numpy / spaCy
+# Install system build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Upgrade pip
 RUN pip install --upgrade pip
 
-# Install Python dependencies (pinned via pyproject.toml).
-# Listed explicitly so Docker can cache this layer independently
-# of source-code changes.
-COPY reskilling-platform/pyproject.toml ./pyproject.toml
-RUN pip install --retries 5 --timeout 120 \
+# Install Python dependencies
+COPY reskilling-platform/pyproject.toml .
+RUN pip install --retries 5 --timeout 60 \
     "fastapi>=0.111" \
     "uvicorn[standard]>=0.30" \
     "spacy>=3.7" \
@@ -77,31 +50,26 @@ RUN pip install --retries 5 --timeout 120 \
     "pyjwt>=2.9" \
     "google-genai>=0.3"
 
-# Download the spaCy English model (must come after spaCy install)
+# Download spaCy NLP model
 RUN python -m spacy download en_core_web_md
 
-# Copy backend source and install the package (editable, no-deps)
+# Copy source code and install the package
 COPY reskilling-platform/ .
 RUN pip install --no-deps -e .
 
-# ── Embed the compiled frontend ──────────────────────────────
-# main.py already mounts /app/static → serves index.html for
-# every non-API path (SPA catch-all route).
-COPY --from=frontend-builder /frontend/dist ./static
+# Copy built frontend assets from Stage 1 into the "static" directory
+COPY --from=frontend-builder /app/dist ./static
 
-# ── Security: run as a non-root user ────────────────────────
+# Security — run as non-root user
 RUN useradd --create-home --shell /bin/bash appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
-# ── Runtime ─────────────────────────────────────────────────
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
-# Single worker is intentional for a memory-intensive spaCy model;
-# scale horizontally (multiple containers) rather than vertically.
 CMD ["uvicorn", "app_api.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \

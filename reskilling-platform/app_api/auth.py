@@ -58,9 +58,7 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
     even when no Supabase JWT secret is configured.
     """
     if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401, detail="Missing or malformed Authorization header."
-        )
+        raise HTTPException(status_code=401, detail="Missing or malformed Authorization header.")
 
     token = authorization.removeprefix("Bearer ").strip()
 
@@ -104,15 +102,12 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
 # get_current_user_with_role / require_role below.
 # --------------------------------------------------------------------------
 
-
 @dataclass
 class CurrentUserWithRole(CurrentUser):
     role: str
 
 
-def get_current_user_with_role(
-    user: CurrentUser = Depends(get_current_user),
-) -> CurrentUserWithRole:
+def get_current_user_with_role(user: CurrentUser = Depends(get_current_user)) -> CurrentUserWithRole:
     from reskilling import db
 
     profile = db.get_user_profile(user.id)

@@ -202,6 +202,6 @@ The `main` branch is protected:
 
 ## Getting Help
 
-- Open a [GitHub Discussion](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/discussions) for questions
-- File a [bug report](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/issues/new?template=bug_report.md) for reproducible issues
-- File a [feature request](https://github.com/JHUB-AFRICA/ai-reskilling-think-tank/issues/new?template=feature_request.md) for new ideas
+- Open a [GitHub Discussion](https://github.com/Brian-code-lab/ai-reskilling-platform/discussions) for questions
+- File a [bug report](https://github.com/Brian-code-lab/ai-reskilling-platform/issues/new?template=bug_report.md) for reproducible issues
+- File a [feature request](https://github.com/Brian-code-lab/ai-reskilling-platform/issues/new?template=feature_request.md) for new ideas

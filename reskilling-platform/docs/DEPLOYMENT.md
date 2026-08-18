@@ -21,7 +21,7 @@ This guide covers deploying the full platform to production:
 
 1. Go to [railway.app](https://railway.app) → **New Project**
 2. Select **Deploy from GitHub repo**
-3. Authorise Railway to access your GitHub account
+3. Authorise Railway to access your GitHub account (and grant access to the `JHUB-AFRICA` organization if needed)
 4. Select `JHUB-AFRICA/ai-reskilling-think-tank`
 5. When asked which directory: select `reskilling-platform/`
 
@@ -38,7 +38,7 @@ In the Railway project dashboard → **Variables**, add:
 | `SUPABASE_JWT_SECRET` | `<jwt-secret>` | From Supabase → Settings → Data API → JWT Secret |
 | `DATABASE_URL` | `postgresql://...` | From Supabase → Settings → Database → Connection string |
 | `GEMINI_API_KEY` | `AIza...` | From Google AI Studio |
-| `CORS_ORIGINS` | `https://JHUB-AFRICA.github.io` | Your GitHub Pages URL |
+| `CORS_ORIGINS` | `https://jhub-africa.github.io,https://JHUB-AFRICA.github.io` | Your GitHub Pages URL |
 | `PORT` | `8000` | Railway auto-detects, but set explicitly for Dockerfile |
 
 ### 1c. Note your Railway URL
@@ -88,7 +88,7 @@ The first time you push to `main`, the `Deploy Frontend to GitHub Pages` workflo
 
 Your live URL will be:
 ```
-https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/
+https://jhub-africa.github.io/ai-reskilling-think-tank/
 ```
 
 ---
@@ -112,7 +112,7 @@ https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/
 
 ## Step 5 — Verify the Full Deployment
 
-1. Open `https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/`
+1. Open `https://jhub-africa.github.io/ai-reskilling-think-tank/`
 2. Register a new account
 3. Log in → should redirect to Dashboard
 4. Go to **Career Analysis** → paste a resume → select an occupation → submit
@@ -125,7 +125,7 @@ https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/
 ### Frontend shows "API Offline"
 → The backend at `VITE_API_URL` is not reachable.  
 → Check: Railway dashboard → your service → is it running?  
-→ Check: `CORS_ORIGINS` on Railway includes your GitHub Pages URL.
+→ Check: `CORS_ORIGINS` on Railway includes your GitHub Pages URL (`https://jhub-africa.github.io`).
 
 ### GitHub Actions deploy fails with "Missing secret"
 → Re-check: Settings → Secrets → all 3 secrets are added (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`).
@@ -146,7 +146,7 @@ Once deployed, share these links:
 
 | Link | Purpose |
 |---|---|
-| `https://JHUB-AFRICA.github.io/ai-reskilling-think-tank/` | Live application |
+| `https://jhub-africa.github.io/ai-reskilling-think-tank/` | Live application |
 | `https://ai-reskilling-api.up.railway.app/docs` | API documentation |
 | `https://github.com/JHUB-AFRICA/ai-reskilling-think-tank` | Source code |
 

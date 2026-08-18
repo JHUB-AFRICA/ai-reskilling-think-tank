@@ -24,9 +24,7 @@ class TestBuildStatement:
         assert stmt["actor"]["mbox"] == "mailto:a@b.com"
 
     def test_object_id_is_namespaced(self):
-        stmt = build_statement(
-            "a@b.com", "experienced", "resume-upload", "Resume upload"
-        )
+        stmt = build_statement("a@b.com", "experienced", "resume-upload", "Resume upload")
         assert stmt["object"]["id"].endswith("/activities/resume-upload")
 
     def test_result_extensions_are_namespaced(self):
@@ -67,11 +65,8 @@ class TestLogGapAnalysisEvent:
     def test_appends_not_overwrites(self, tmp_path):
         log_path = tmp_path / "statements.jsonl"
         summary = {
-            "occupation_title": "Data Analyst",
-            "readiness_score": 50.0,
-            "matched_count": 1,
-            "missing_count": 1,
-            "top_gaps": [],
+            "occupation_title": "Data Analyst", "readiness_score": 50.0,
+            "matched_count": 1, "missing_count": 1, "top_gaps": [],
         }
         log_gap_analysis_event("a@b.com", summary, log_path=log_path)
         log_gap_analysis_event("a@b.com", summary, log_path=log_path)

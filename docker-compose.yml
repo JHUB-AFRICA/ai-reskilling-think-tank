@@ -1,81 +1,82 @@
 # ============================================================
 # Docker Compose — AI Reskilling Think Tank Platform
 # ============================================================
-# Uses the single unified image that contains both the React
-# frontend (served as static files) and the FastAPI backend.
-#
 # Quick start:
-#   cp .env.example .env          # fill in real secrets
+#   cp .env.example .env
 #   docker compose up
 #
-# Rebuild after source changes:
+# Rebuild after code changes:
 #   docker compose up --build
 #
 # Stop:
 #   docker compose down
-#
-# Pull the pre-built image from GHCR (no build needed):
-#   docker compose pull && docker compose up
 # ============================================================
 
 name: ai-reskilling-platform
 
 services:
-  app:
-    # ── Image ────────────────────────────────────────────────
-    # Set GHCR_IMAGE in your .env to use the pre-built registry
-    # image, e.g.:
-    #   GHCR_IMAGE=ghcr.io/JHUB-AFRICA/ai-reskilling-think-tank:latest
-    #
-    # If GHCR_IMAGE is not set, compose falls back to building
-    # locally from Dockerfile.unified.
-    image: ${GHCR_IMAGE:-reskilling-platform-unified:local}
+
+  # ------------------------------------------------------------
+  # Backend: FastAPI (Python 3.11 + spaCy + Gemini)
+  # ------------------------------------------------------------
+  backend:
     build:
-      context: .
-      dockerfile: Dockerfile.unified
-      args:
-        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
-
-    container_name: reskilling_app
+      context: ./reskilling-platform
+      dockerfile: Dockerfile
+    container_name: reskilling_backend
     restart: unless-stopped
-
     ports:
-      # Host port 8000 → container port 8000 (Uvicorn)
-      # Change the left side (e.g. "80:8000") to expose on port 80
       - "8000:8000"
-
     env_file:
       - ./reskilling-platform/.env
-
     environment:
-      # Allow the browser to reach the API from these origins.
-      # When running the unified image, both frontend & API share
-      # the same origin so CORS is effectively a no-op, but keep
-      # this for dev-server access.
-      - CORS_ORIGINS=http://localhost:8000,http://localhost:3000,http://localhost:5173
-
+      # Override CORS to allow the local frontend container
+      - CORS_ORIGINS=http://localhost:80,http://localhost:3000
     volumes:
-      # Persist xAPI LRS / processed data across container restarts
+      # Persist xAPI log across container restarts
       - lrs_data:/app/data/processed
-
     healthcheck:
       test: ["CMD", "python", "-c",
              "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s
-
+      start_period: 90s   # spaCy model load takes ~60s on first run
     networks:
       - reskilling_net
 
-# ── Named Volumes ─────────────────────────────────────────────
+  # ------------------------------------------------------------
+  # Frontend: React/Vite (served by Nginx)
+  # ------------------------------------------------------------
+  frontend:
+    build:
+      context: ./CareerDev
+      dockerfile: Dockerfile
+      args:
+        # These are passed at build time — change in .env, then rebuild
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_API_URL: http://localhost:8000
+    container_name: reskilling_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - reskilling_net
+
+# ------------------------------------------------------------
+# Named Volumes
+# ------------------------------------------------------------
 volumes:
   lrs_data:
     name: reskilling_lrs_data
 
-# ── Networks ──────────────────────────────────────────────────
+# ------------------------------------------------------------
+# Networks
+# ------------------------------------------------------------
 networks:
   reskilling_net:
     name: reskilling_network

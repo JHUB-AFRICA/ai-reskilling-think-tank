@@ -38,39 +38,15 @@ class FakeExtractor:
 @pytest.fixture
 def synthetic_taxonomy(tmp_path):
     rows = [
-        {
-            "skill_id": "SKL_001",
-            "skill_name": "Python",
-            "cluster": "Python",
-            "domain": "Technology",
-            "source": "technology",
-            "onet_element_id": "T1",
-            "onet_soc_code": "15-0000",
-            "occupation_title": "Data Analyst",
-            "importance": 4.8,
-        },
-        {
-            "skill_id": "SKL_002",
-            "skill_name": "SQL",
-            "cluster": "SQL",
-            "domain": "Technology",
-            "source": "technology",
-            "onet_element_id": "T2",
-            "onet_soc_code": "15-0000",
-            "occupation_title": "Data Analyst",
-            "importance": 4.5,
-        },
-        {
-            "skill_id": "SKL_003",
-            "skill_name": "Critical Thinking",
-            "cluster": "Critical Thinking",
-            "domain": "Data & Analytics",
-            "source": "general",
-            "onet_element_id": "G1",
-            "onet_soc_code": "15-0000",
-            "occupation_title": "Data Analyst",
-            "importance": 4.2,
-        },
+        {"skill_id": "SKL_001", "skill_name": "Python", "cluster": "Python", "domain": "Technology",
+         "source": "technology", "onet_element_id": "T1", "onet_soc_code": "15-0000",
+         "occupation_title": "Data Analyst", "importance": 4.8},
+        {"skill_id": "SKL_002", "skill_name": "SQL", "cluster": "SQL", "domain": "Technology",
+         "source": "technology", "onet_element_id": "T2", "onet_soc_code": "15-0000",
+         "occupation_title": "Data Analyst", "importance": 4.5},
+        {"skill_id": "SKL_003", "skill_name": "Critical Thinking", "cluster": "Critical Thinking",
+         "domain": "Data & Analytics", "source": "general", "onet_element_id": "G1",
+         "onet_soc_code": "15-0000", "occupation_title": "Data Analyst", "importance": 4.2},
     ]
     path = tmp_path / "synthetic_taxonomy.csv"
     pd.DataFrame(rows).to_csv(path, index=False)
@@ -103,9 +79,7 @@ class TestOccupations:
 
 class TestExtractSkills:
     def test_extracts_fake_skills(self, client):
-        resp = client.post(
-            "/extract-skills", json={"resume_text": "Python and SQL developer"}
-        )
+        resp = client.post("/extract-skills", json={"resume_text": "Python and SQL developer"})
         assert resp.status_code == 200
         skills = resp.json()["skills"]
         assert {s["skill_name"] for s in skills} == {"Python", "SQL"}
@@ -119,10 +93,7 @@ class TestAnalyzeGap:
     def test_full_gap_analysis_flow(self, client):
         resp = client.post(
             "/analyze-gap",
-            json={
-                "resume_text": "Python and SQL developer",
-                "target_occupation": "Data Analyst",
-            },
+            json={"resume_text": "Python and SQL developer", "target_occupation": "Data Analyst"},
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -145,10 +116,7 @@ class TestLrsStatements:
     def test_logs_and_retrieves_statement(self, client):
         client.post(
             "/analyze-gap",
-            json={
-                "resume_text": "Python developer",
-                "target_occupation": "Data Analyst",
-            },
+            json={"resume_text": "Python developer", "target_occupation": "Data Analyst"},
         )
         resp = client.get("/lrs/statements")
         assert resp.status_code == 200
@@ -168,9 +136,7 @@ class TestTaxonomyStats:
 
 class TestTaxonomyRequirements:
     def test_returns_sorted_requirements(self, client):
-        resp = client.get(
-            "/taxonomy/requirements", params={"occupation": "Data Analyst"}
-        )
+        resp = client.get("/taxonomy/requirements", params={"occupation": "Data Analyst"})
         assert resp.status_code == 200
         reqs = resp.json()["requirements"]
         importances = [r["importance"] for r in reqs]
@@ -214,10 +180,7 @@ class TestCareerGuidance:
     def test_requires_auth(self, client):
         resp = client.post(
             "/me/career-guidance",
-            json={
-                "resume_text": "Python developer",
-                "career_goal": "become an ML engineer",
-            },
+            json={"resume_text": "Python developer", "career_goal": "become an ML engineer"},
         )
         assert resp.status_code == 422  # missing Authorization header
 
@@ -227,10 +190,7 @@ class TestCareerGuidance:
         monkeypatch.setattr(llm, "GEMINI_API_KEY", None)
         resp = authed_client.post(
             "/me/career-guidance",
-            json={
-                "resume_text": "Python developer",
-                "career_goal": "become an ML engineer",
-            },
+            json={"resume_text": "Python developer", "career_goal": "become an ML engineer"},
         )
         assert resp.status_code == 500
         assert "GEMINI_API_KEY" in resp.json()["detail"]
@@ -238,28 +198,17 @@ class TestCareerGuidance:
     def test_happy_path_classifies_suggestions(self, authed_client, monkeypatch):
         import reskilling.llm_reasoning as llm
 
-        monkeypatch.setattr(
-            llm,
-            "suggest_skills_for_goal",
-            lambda skills, goal: ["Python", "Quantum Computing"],
-        )
+        monkeypatch.setattr(llm, "suggest_skills_for_goal", lambda skills, goal: ["Python", "Quantum Computing"])
 
         resp = authed_client.post(
             "/me/career-guidance",
-            json={
-                "resume_text": "Python developer",
-                "career_goal": "become an ML engineer",
-            },
+            json={"resume_text": "Python developer", "career_goal": "become an ML engineer"},
         )
         assert resp.status_code == 200
         suggestions = resp.json()["suggestions"]
         statuses = {s["skill_name"]: s["status"] for s in suggestions}
-        assert (
-            statuses["Python"] == "taxonomy_match"
-        )  # Python exists in synthetic taxonomy
-        assert (
-            statuses["Quantum Computing"] == "emerging"
-        )  # not in taxonomy -- Holding Pen
+        assert statuses["Python"] == "taxonomy_match"  # Python exists in synthetic taxonomy
+        assert statuses["Quantum Computing"] == "emerging"  # not in taxonomy -- Holding Pen
         assert resp.json()["cached"] is False
 
     def test_second_identical_call_is_cached(self, authed_client, monkeypatch):
@@ -273,10 +222,7 @@ class TestCareerGuidance:
 
         monkeypatch.setattr(llm, "suggest_skills_for_goal", fake_suggest)
 
-        body = {
-            "resume_text": "Python developer",
-            "career_goal": "become an ML engineer",
-        }
+        body = {"resume_text": "Python developer", "career_goal": "become an ML engineer"}
         first = authed_client.post("/me/career-guidance", json=body)
         second = authed_client.post("/me/career-guidance", json=body)
 
@@ -288,9 +234,7 @@ class TestCareerGuidance:
         import app_api.rate_limit as rl
         import reskilling.llm_reasoning as llm
 
-        monkeypatch.setattr(
-            llm, "suggest_skills_for_goal", lambda skills, goal: ["Python"]
-        )
+        monkeypatch.setattr(llm, "suggest_skills_for_goal", lambda skills, goal: ["Python"])
 
         # Exhaust the limit with distinct goals so the cache doesn't
         # short-circuit before the limit is actually reached.
@@ -307,20 +251,17 @@ class TestCareerGuidance:
         )
         assert blocked.status_code == 429
 
-    def test_stream_endpoint_serves_cached_result_without_calling_gemini(
-        self, authed_client, monkeypatch
-    ):
+    def test_stream_endpoint_serves_cached_result_without_calling_gemini(self, authed_client, monkeypatch):
         """
         Verifies the SSE endpoint's cache-hit fast path -- the one
         part of /me/career-guidance/stream testable without a live
         Gemini call, since a cache hit returns before any streaming
         generation is attempted.
         """
+        import app_api.rate_limit as rl
         import reskilling.llm_reasoning as llm
 
-        monkeypatch.setattr(
-            llm, "suggest_skills_for_goal", lambda skills, goal: ["Python"]
-        )
+        monkeypatch.setattr(llm, "suggest_skills_for_goal", lambda skills, goal: ["Python"])
 
         body = {"resume_text": "Python developer", "career_goal": "stream-cache-test"}
         first = authed_client.post("/me/career-guidance", json=body)
@@ -336,9 +277,7 @@ class TestSkillsResources:
     """Public endpoint -- no auth required, since roadmap resource
     suggestions belong on the anonymous demo path too."""
 
-    def test_returns_search_fallback_when_no_curated_resources(
-        self, client, monkeypatch
-    ):
+    def test_returns_search_fallback_when_no_curated_resources(self, client, monkeypatch):
         import reskilling.db as db
 
         monkeypatch.setattr(db, "fetch_learning_resources", lambda skill_id: [])
@@ -355,14 +294,7 @@ class TestSkillsResources:
     def test_curated_resources_come_first_when_present(self, client, monkeypatch):
         import reskilling.db as db
 
-        curated = [
-            {
-                "title": "Real Course",
-                "url": "https://x.com",
-                "provider": "X Academy",
-                "is_free": True,
-            }
-        ]
+        curated = [{"title": "Real Course", "url": "https://x.com", "provider": "X Academy", "is_free": True}]
         monkeypatch.setattr(db, "fetch_learning_resources", lambda skill_id: curated)
 
         resp = client.post(
@@ -378,9 +310,7 @@ class TestSkillsResources:
 
         monkeypatch.setattr(db, "fetch_learning_resources", lambda skill_id: [])
 
-        resp = client.post(
-            "/skills/resources", json={"skills": [{"skill_id": "SKL_001"}]}
-        )
+        resp = client.post("/skills/resources", json={"skills": [{"skill_id": "SKL_001"}]})
         assert resp.status_code == 200
         assert resp.json()["resources"] == {}
 
@@ -392,10 +322,8 @@ class TestRoleBasedAccess:
         from app_api.main import app
 
         def _set(role: str):
-            app.dependency_overrides[get_current_user_with_role] = lambda: (
-                CurrentUserWithRole(
-                    id="test-user-1", email="test@example.com", role=role
-                )
+            app.dependency_overrides[get_current_user_with_role] = lambda: CurrentUserWithRole(
+                id="test-user-1", email="test@example.com", role=role
             )
 
         yield _set
@@ -418,11 +346,7 @@ class TestRoleBasedAccess:
     def test_admin_endpoint_allows_administrator(self, client, as_role, monkeypatch):
         import reskilling.db as db
 
-        monkeypatch.setattr(
-            db,
-            "list_all_profiles",
-            lambda: [{"id": "u1", "email": "a@b.com", "role": "job_seeker"}],
-        )
+        monkeypatch.setattr(db, "list_all_profiles", lambda: [{"id": "u1", "email": "a@b.com", "role": "job_seeker"}])
         as_role("administrator")
         resp = client.get("/admin/users")
         assert resp.status_code == 200
@@ -466,10 +390,7 @@ class TestOrgAndProviderEndpoints:
     def test_save_and_get_org_skill_framework(self, client, monkeypatch):
         saved_frameworks = [
             {"role_name": "Data Analyst", "required_skills": ["Python", "SQL"]},
-            {
-                "role_name": "Data Scientist",
-                "required_skills": ["Python", "Statistics"],
-            },
+            {"role_name": "Data Scientist", "required_skills": ["Python", "Statistics"]},
         ]
 
         monkeypatch.setattr(
@@ -479,9 +400,7 @@ class TestOrgAndProviderEndpoints:
                 {"id": "f2", "user_id": user_id, **frameworks[1]},
             ],
         )
-        resp = client.post(
-            "/org/skill-framework", json={"frameworks": saved_frameworks}
-        )
+        resp = client.post("/org/skill-framework", json={"frameworks": saved_frameworks})
         assert resp.status_code == 200
         assert resp.json()["saved"] == 2
         assert resp.json()["frameworks"][0]["role_name"] == "Data Analyst"
@@ -489,12 +408,7 @@ class TestOrgAndProviderEndpoints:
         monkeypatch.setattr(
             "reskilling.db.list_org_skill_frameworks",
             lambda user_id: [
-                {
-                    "id": "f1",
-                    "user_id": user_id,
-                    "role_name": "Data Analyst",
-                    "required_skills": ["Python", "SQL"],
-                },
+                {"id": "f1", "user_id": user_id, "role_name": "Data Analyst", "required_skills": ["Python", "SQL"]},
             ],
         )
         resp = client.get("/org/skill-framework")
@@ -515,29 +429,18 @@ class TestOrgAndProviderEndpoints:
         )
         resp = client.post(
             "/me/provider-connections",
-            json={
-                "provider_name": "coursera",
-                "provider_account": "test@example.com",
-                "access_token": "tok",
-            },
+            json={"provider_name": "coursera", "provider_account": "test@example.com", "access_token": "tok"},
         )
         assert resp.status_code == 200
         assert resp.json()["provider_name"] == "coursera"
 
         monkeypatch.setattr(
             "reskilling.db.sync_provider_progress",
-            lambda user_id, provider_name, progress: {
-                "synced": True,
-                "updated_items": len(progress),
-            },
+            lambda user_id, provider_name, progress: {"synced": True, "updated_items": len(progress)},
         )
         resp = client.post(
             "/me/provider-connections/coursera/sync",
-            json={
-                "progress": [
-                    {"resource_id": 1, "status": "completed", "progress_percent": 100}
-                ]
-            },
+            json={"progress": [{"resource_id": 1, "status": "completed", "progress_percent": 100}]},
         )
         assert resp.status_code == 200
         assert resp.json()["synced"] is True
@@ -554,11 +457,7 @@ class TestOrgAndProviderEndpoints:
     def test_verify_resource_link_succeeds(self, client, monkeypatch):
         monkeypatch.setattr(
             "reskilling.db.verify_learning_resource_link",
-            lambda resource_id: {
-                "id": resource_id,
-                "last_verified_at": "2026-01-01T00:00:00Z",
-                "last_link_status": "ok",
-            },
+            lambda resource_id: {"id": resource_id, "last_verified_at": "2026-01-01T00:00:00Z", "last_link_status": "ok"},
         )
         resp = client.post("/resources/999/verify")
         assert resp.status_code == 200

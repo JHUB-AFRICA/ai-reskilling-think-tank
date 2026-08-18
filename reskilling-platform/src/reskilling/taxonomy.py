@@ -89,7 +89,6 @@ class TaxonomyRow:
 # Loaders
 # --------------------------------------------------------------------------
 
-
 def _read_onet_txt(filename: str) -> pd.DataFrame:
     """
     O*NET text files are tab-separated, UTF-8, with a header row.
@@ -125,7 +124,9 @@ def load_skills() -> pd.DataFrame:
     df = df[df["Scale ID"] == "IM"].copy()
     df["Data Value"] = pd.to_numeric(df["Data Value"], errors="coerce")
 
-    return df[["O*NET-SOC Code", "Element ID", "Element Name", "Data Value"]].rename(
+    return df[
+        ["O*NET-SOC Code", "Element ID", "Element Name", "Data Value"]
+    ].rename(
         columns={
             "O*NET-SOC Code": "onet_soc_code",
             "Element ID": "onet_element_id",
@@ -162,20 +163,13 @@ def load_technology_skills() -> pd.DataFrame:
     ).str.slice(0, 40)
 
     return df[
-        [
-            "onet_soc_code",
-            "onet_element_id",
-            "skill_name",
-            "importance",
-            "cluster_override",
-        ]
+        ["onet_soc_code", "onet_element_id", "skill_name", "importance", "cluster_override"]
     ]
 
 
 # --------------------------------------------------------------------------
 # Transform
 # --------------------------------------------------------------------------
-
 
 def assign_domain(skill_name: str, source: str) -> str:
     if source == "technology":
@@ -223,8 +217,8 @@ def build_taxonomy() -> pd.DataFrame:
     merged["domain"] = merged.apply(
         lambda r: assign_domain(r["skill_name"], r["source"]), axis=1
     )
-    merged["skill_id"] = "SKL_" + merged["onet_element_id"].astype(str).str.replace(
-        ".", "", regex=False
+    merged["skill_id"] = (
+        "SKL_" + merged["onet_element_id"].astype(str).str.replace(".", "", regex=False)
     )
 
     # A given skill_id can repeat across many occupations -- that's
@@ -251,7 +245,6 @@ def build_taxonomy() -> pd.DataFrame:
 # --------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------
-
 
 def main() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)

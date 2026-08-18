@@ -64,9 +64,7 @@ _SEARCH_PROVIDERS: list[tuple[str, str, bool]] = [
 ]
 
 
-def get_search_fallback_resources(
-    skill_name: str, limit: int = 2
-) -> list[ResourceLink]:
+def get_search_fallback_resources(skill_name: str, limit: int = 2) -> list[ResourceLink]:
     """
     Deterministic, guaranteed-valid search links. `limit` caps how
     many providers are surfaced per skill, to avoid overwhelming the
@@ -76,7 +74,7 @@ def get_search_fallback_resources(
     query = urllib.parse.quote_plus(skill_name)
     links = [
         ResourceLink(
-            title=f'Search {provider} for "{skill_name}"',
+            title=f"Search {provider} for \"{skill_name}\"",
             url=template.format(q=query),
             provider=provider,
             tier="search",

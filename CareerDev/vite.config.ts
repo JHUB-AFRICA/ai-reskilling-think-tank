@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/ai-reskilling-think-tank/',
+  base: process.env.VITE_BASE_PATH || '/ai-reskilling-think-tank/',
 })
