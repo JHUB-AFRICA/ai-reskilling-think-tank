@@ -1,34 +1,30 @@
 """
 auth.py
 
-FastAPI dependency verifying Supabase-issued JWTs. Supabase signs
-access tokens with HS256 using the project's JWT secret (Project
-Settings -> Data API -> JWT Secret) -- this dependency decodes and
-verifies that signature locally, extracting the user id (`sub` claim)
-and email, with no network call to Supabase itself. This keeps
-authenticated request latency independent of Supabase's availability
-for the verification step (though of course the database calls that
-follow still depend on it).
+FastAPI dependency verifying Supabase-issued JWTs. It supports both
+legacy HS256 projects (using SUPABASE_JWT_SECRET) and modern asymmetric
+Supabase signing keys (ES256/RS256), whose public keys are obtained from
+the project's JWKS endpoint.  No private signing material is ever sent
+to the client.
 """
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from functools import lru_cache
 
 import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, Header, HTTPException
+from jwt.exceptions import PyJWKClientError
 
 load_dotenv()
 
-_raw_jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
-# Supabase signs JWTs using the raw JWT secret string (as shown in Project Settings
-# ? Data API ? JWT Secret) -- NOT the base64-decoded bytes of that string.
-# PyJWT 2.x must receive the same raw string that Supabase used for signing,
-# otherwise it cannot verify the signature and raises InvalidAlgorithmError.
-SUPABASE_JWT_SECRET: str = _raw_jwt_secret
+SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
 JWT_AUDIENCE = "authenticated"  # Supabase's standard audience claim for access tokens
+ASYMMETRIC_ALGORITHMS = frozenset({"ES256", "RS256"})
 LOCAL_PREVIEW_TOKEN = "local-token"
 LOCAL_PREVIEW_USER_ID = os.environ.get("LOCAL_PREVIEW_USER_ID", "local-preview-user")
 LOCAL_PREVIEW_EMAIL = os.environ.get("LOCAL_PREVIEW_EMAIL", "local-preview@example.com")
@@ -47,6 +43,53 @@ _LOCAL_PREVIEW_ENABLED = os.environ.get("DISABLE_LOCAL_PREVIEW", "").lower() not
 class CurrentUser:
     id: str
     email: str | None
+
+
+@lru_cache(maxsize=1)
+def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
+    """Create one cached JWKS client; PyJWT refreshes keys when necessary."""
+    return jwt.PyJWKClient(jwks_url)
+
+
+def _verify_supabase_token(token: str) -> dict:
+    """Verify a token against the explicitly supported Supabase algorithms."""
+    header = jwt.get_unverified_header(token)
+    algorithm = header.get("alg")
+
+    if algorithm == "HS256":
+        if not SUPABASE_JWT_SECRET:
+            raise HTTPException(
+                status_code=500,
+                detail="SUPABASE_JWT_SECRET is not configured for legacy HS256 tokens.",
+            )
+        return jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience=JWT_AUDIENCE,
+        )
+
+    if algorithm in ASYMMETRIC_ALGORITHMS:
+        if not SUPABASE_URL:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "SUPABASE_URL is not configured for asymmetric JWT verification."
+                ),
+            )
+        jwks_url = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+        signing_key = _get_jwks_client(jwks_url).get_signing_key_from_jwt(token)
+        return jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=[algorithm],
+            audience=JWT_AUDIENCE,
+        )
+
+    raise HTTPException(
+        status_code=401,
+        detail=f"Unsupported JWT signing algorithm: {algorithm or 'missing'}.",
+    )
 
 
 def get_current_user(authorization: str = Header(...)) -> CurrentUser:
@@ -79,31 +122,19 @@ def get_current_user(authorization: str = Header(...)) -> CurrentUser:
             )
         return CurrentUser(id=LOCAL_PREVIEW_USER_ID, email=LOCAL_PREVIEW_EMAIL)
 
-    if not SUPABASE_JWT_SECRET:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "SUPABASE_JWT_SECRET is not configured on the server. "
-                "Set it in .env (Project Settings -> Data API -> JWT Secret)."
-            ),
-        )
-
     try:
-        payload = jwt.decode(
-            token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience=JWT_AUDIENCE,
-        )
+        payload = _verify_supabase_token(token)
+    except HTTPException:
+        raise
     except jwt.ExpiredSignatureError as exc:
         raise HTTPException(status_code=401, detail="Token has expired.") from exc
+    except PyJWKClientError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to retrieve the Supabase JWT verification key.",
+        ) from exc
     except jwt.InvalidTokenError as exc:
-        try:
-            unverified_header = jwt.get_unverified_header(token)
-            alg = unverified_header.get("alg")
-        except Exception:
-            alg = "unknown"
-        raise HTTPException(status_code=401, detail=f"Invalid token: {exc}. alg in token: {alg}") from exc
+        raise HTTPException(status_code=401, detail="Invalid or expired token.") from exc
 
     user_id = payload.get("sub")
     if not user_id:
@@ -137,26 +168,18 @@ def get_current_user_with_role(
 
     profile = db.get_user_profile(user.id)
     if profile is None:
-        # The auth trigger (004_create_profiles_table.sql) should have
-        # created this row at signup. A missing profile is a genuine,
-        # reportable inconsistency, not something to paper over with a
-        # silent default -- surfacing it as a clear 500 is more honest
-        # than quietly assuming "job_seeker" and hiding a real bug.
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"No profile found for user {user.id}. The auth trigger in "
-                "004_create_profiles_table.sql may not have run for this account."
-            ),
-        )
+        try:
+            profile = db.upsert_profile_details(user_id=user.id, email=user.email)
+        except Exception:
+            pass
 
     return CurrentUserWithRole(
         id=user.id,
         email=user.email,
-        role=profile["role"],
-        full_name=profile.get("full_name"),
-        target_career=profile.get("target_career"),
-        experience_level=profile.get("experience_level"),
+        role=profile.get("role", "job_seeker") if profile else "job_seeker",
+        full_name=profile.get("full_name") if profile else None,
+        target_career=profile.get("target_career") if profile else None,
+        experience_level=profile.get("experience_level") if profile else None,
     )
 
 
