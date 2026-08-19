@@ -502,14 +502,17 @@ def browse_learning_resources(
     clients can never silently style a discovery link as a vetted course."""
     from reskilling import db
 
-    return {
-        "resources": db.list_learning_resources(
-            query=query,
-            skill=skill,
-            verification_status=verification_status,
-            limit=limit,
-        )
-    }
+    try:
+        return {
+            "resources": db.list_learning_resources(
+                query=query,
+                skill=skill,
+                verification_status=verification_status,
+                limit=limit,
+            )
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Database error: {exc}") from exc
 
 
 class LearningItemRequest(BaseModel):
